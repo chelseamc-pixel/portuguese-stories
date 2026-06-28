@@ -1,0 +1,13 @@
+.env
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+*.egg-info/
+dist/
+build/
+.DS_Store
+
+# Audio files are generated at deploy time — don't commit them from local dev
+# (The GitHub Action generates them fresh and deploys via gh-pages branch)
+docs/audio/*.mp3

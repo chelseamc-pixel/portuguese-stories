@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#f7f4ee">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>O Gato e o Jardim Encantado</title>
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    :root {
+      --green: #2c5f2e;
+      --green-light: #e8f5e9;
+      --green-mid: #3d7a3f;
+      --bg: #f7f4ee;
+      --surface: #ffffff;
+      --text: #1c1c1e;
+      --text-muted: #6e6e73;
+      --popup-bg: #1c1c1e;
+      --popup-text: #f5f5f7;
+      --popup-sub: #aeaeb2;
+      --radius: 16px;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Georgia', 'Times New Roman', serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ---- Header ---- */
+    .header {
+      position: sticky;
+      top: 0;
+      z-index: 200;
+      background: var(--green);
+      color: #fff;
+      padding: 14px 20px 16px;
+    }
+    .header-eyebrow {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.6px;
+      text-transform: uppercase;
+      opacity: 0.75;
+    }
+    .header-title {
+      font-size: 19px;
+      font-weight: 700;
+      margin-top: 5px;
+      line-height: 1.3;
+    }
+
+    /* ---- Story ---- */
+    .story-wrap {
+      padding: 26px 22px 140px;
+      max-width: 640px;
+      margin: 0 auto;
+    }
+    .story-body {
+      font-size: 21px;
+      line-height: 1.9;
+      letter-spacing: 0.01em;
+      color: var(--text);
+    }
+
+    /* ---- Word spans ---- */
+    .word {
+      display: inline;
+    }
+    .word.clickable {
+      cursor: pointer;
+      border-radius: 4px;
+      padding: 1px 0;
+      transition: background 0.12s;
+    }
+    .word.clickable:active {
+      background: rgba(44, 95, 46, 0.18);
+    }
+    .word.active {
+      background: rgba(44, 95, 46, 0.22);
+    }
+
+    /* ---- Fun fact ---- */
+    .fun-fact {
+      margin-top: 32px;
+      background: var(--green-light);
+      border-left: 4px solid var(--green);
+      border-radius: 0 10px 10px 0;
+      padding: 14px 18px;
+    }
+    .fun-fact-label {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: var(--green);
+      margin-bottom: 6px;
+    }
+    .fun-fact-text {
+      font-size: 15px;
+      line-height: 1.65;
+      color: var(--text);
+    }
+
+    /* ---- Hint ---- */
+    .hint {
+      text-align: center;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 28px;
+      padding: 0 8px;
+    }
+
+    /* ---- Overlay ---- */
+    .overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 300;
+    }
+    .overlay.visible { display: block; }
+
+    /* ---- Popup card ---- */
+    .popup {
+      display: none;
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 400;
+      padding: 12px 16px max(24px, env(safe-area-inset-bottom));
+    }
+    .popup.visible { display: block; }
+
+    .popup-card {
+      background: var(--popup-bg);
+      border-radius: var(--radius);
+      padding: 18px 20px 20px;
+      max-width: 480px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      box-shadow: 0 12px 48px rgba(0,0,0,0.35);
+    }
+
+    .popup-info { flex: 1; min-width: 0; }
+
+    .popup-word {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--popup-text);
+      line-height: 1.2;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .popup-translation {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: 15px;
+      color: var(--popup-sub);
+      margin-top: 5px;
+    }
+
+    /* Replay button */
+    .replay-btn {
+      flex-shrink: 0;
+      width: 46px;
+      height: 46px;
+      border-radius: 50%;
+      border: none;
+      background: var(--green);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s;
+    }
+    .replay-btn:active { transform: scale(0.92); }
+    .replay-btn:disabled { background: #3a3a3c; opacity: 0.5; cursor: default; }
+    .replay-btn.playing { background: var(--green-mid); }
+    .replay-btn svg {
+      width: 22px;
+      height: 22px;
+      fill: white;
+    }
+  </style>
+</head>
+<body>
+
+  <header class="header">
+    <div class="header-eyebrow">June 28, 2026 &middot; Dry Run Test</div>
+    <div class="header-title">O Gato e o Jardim Encantado</div>
+  </header>
+
+  <div class="story-wrap">
+    <div class="story-body" id="story-body"><span class="word clickable" data-translation="was">Era</span> <span class="word clickable" data-translation="a">uma</span> <span class="word clickable" data-translation="time">vez</span> <span class="word clickable" data-translation="a">um</span> <span class="word clickable" data-translation="small">pequeno</span> <span class="word clickable" data-translation="cat">gato</span> <span class="word clickable" data-translation="called">chamado</span> <span class="word clickable" data-translation="Mimi">Mimi</span> <span class="word clickable" data-translation="that">que</span> <span class="word clickable" data-translation="lived">vivia</span> <span class="word clickable" data-translation="in a">num</span> <span class="word clickable" data-translation="garden">jardim</span> <span class="word clickable" data-translation="enchanted">encantado</span>. <span class="word clickable" data-translation="the">O</span> <span class="word clickable" data-translation="garden">jardim</span> <span class="word clickable" data-translation="was">estava</span> <span class="word clickable" data-translation="full">cheio</span> <span class="word clickable" data-translation="of">de</span> <span class="word clickable" data-translation="flowers">flores</span> <span class="word clickable" data-translation="colourful">coloridas</span> <span class="word clickable" data-translation="and">e</span> <span class="word clickable" data-translation="butterflies">borboletas</span> <span class="word clickable" data-translation="to">a</span> <span class="word clickable" data-translation="fly">voar</span>. <span class="word clickable" data-translation="every">Todos</span> <span class="word clickable" data-translation="the">os</span> <span class="word clickable" data-translation="days">dias</span>, <span class="word clickable" data-translation="Mimi">Mimi</span> <span class="word clickable" data-translation="played">brincava</span> <span class="word clickable" data-translation="among">entre</span> <span class="word">as</span> <span class="word clickable" data-translation="flowers">flores</span> <span class="word clickable" data-translation="and">e</span> <span class="word clickable" data-translation="jumped">saltava</span> <span class="word clickable" data-translation="after">atrás</span> <span class="word clickable" data-translation="of the">das</span> <span class="word clickable" data-translation="butterflies">borboletas</span>. <span class="word clickable" data-translation="a">Um</span> <span class="word clickable" data-translation="day">dia</span>, <span class="word clickable" data-translation="Mimi">Mimi</span> <span class="word clickable" data-translation="found">encontrou</span> <span class="word clickable" data-translation="a">uma</span> <span class="word">borboleta</span> <span class="word clickable" data-translation="blue">azul</span> <span class="word clickable" data-translation="very">muito</span> <span class="word clickable" data-translation="special">especial</span>. <span class="word clickable" data-translation="to">A</span> <span class="word">borboleta</span> <span class="word clickable" data-translation="said">disse</span>: — <span class="word clickable" data-translation="hello">Olá</span>, <span class="word clickable" data-translation="Mimi">Mimi</span>! <span class="word clickable" data-translation="do you want">Queres</span> <span class="word clickable" data-translation="fly">voar</span> <span class="word clickable" data-translation="with me">comigo</span>? <span class="word clickable" data-translation="the">O</span> <span class="word clickable" data-translation="cat">gato</span> <span class="word clickable" data-translation="became">ficou</span> <span class="word clickable" data-translation="very">muito</span> <span class="word clickable" data-translation="happy">contente</span> <span class="word clickable" data-translation="and">e</span> <span class="word clickable" data-translation="the">os</span> <span class="word clickable" data-translation="two">dois</span> <span class="word clickable" data-translation="became">tornaram</span>-<span class="word clickable" data-translation="each other">se</span> <span class="word clickable" data-translation="great">grandes</span> <span class="word clickable" data-translation="friends">amigos</span>. <span class="word clickable" data-translation="and">E</span> <span class="word clickable" data-translation="lived">viveram</span> <span class="word clickable" data-translation="happily">felizes</span> <span class="word clickable" data-translation="for">para</span> <span class="word clickable" data-translation="ever">sempre</span> <span class="word clickable" data-translation="in the">no</span> <span class="word clickable" data-translation="garden">jardim</span> <span class="word clickable" data-translation="enchanted">encantado</span>.</div>
+
+    <div class="fun-fact">
+      <div class="fun-fact-label">Sabia que&hellip;</div>
+      <div class="fun-fact-text">Os gatos conseguem saltar até seis vezes o comprimento do seu corpo!</div>
+    </div>
+
+    <p class="hint">Toca numa palavra para ver a tradução e ouvir a pronúncia</p>
+  </div>
+
+  <!-- Click-away overlay -->
+  <div class="overlay" id="overlay"></div>
+
+  <!-- Bottom popup -->
+  <div class="popup" id="popup" role="dialog" aria-modal="true">
+    <div class="popup-card">
+      <div class="popup-info">
+        <div class="popup-word" id="popup-word"></div>
+        <div class="popup-translation" id="popup-translation"></div>
+      </div>
+      <button class="replay-btn" id="replay-btn" aria-label="Ouvir novamente" disabled>
+        <!-- Speaker icon -->
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05
+                   c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71
+                   s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <script>
+    // Page metadata
+    const META = {"date": "2026-06-28", "date_formatted": "June 28, 2026", "topic_en": "Dry Run Test", "topic_pt": "Execução de Teste", "title_pt": "O Gato e o Jardim Encantado"};
+
+    // ---- State ----
+    let activeEl   = null;
+    let currentAudio = null;
+
+    // ---- DOM refs ----
+    const popup       = document.getElementById('popup');
+    const overlay     = document.getElementById('overlay');
+    const popupWord   = document.getElementById('popup-word');
+    const popupTrans  = document.getElementById('popup-translation');
+    const replayBtn   = document.getElementById('replay-btn');
+    const storyBody   = document.getElementById('story-body');
+
+    // ---- Audio ----
+    function stopAudio() {
+      if (currentAudio) {
+        currentAudio.pause();
+        currentAudio.src = '';
+        currentAudio = null;
+        replayBtn.classList.remove('playing');
+      }
+    }
+
+    function playAudio(src) {
+      stopAudio();
+      const audio = new Audio(src);
+      currentAudio = audio;
+      replayBtn.classList.add('playing');
+      audio.play().catch(() => {}); // Ignore autoplay policy errors silently
+      audio.onended = () => {
+        replayBtn.classList.remove('playing');
+        currentAudio = null;
+      };
+      audio.onerror = () => {
+        replayBtn.classList.remove('playing');
+        currentAudio = null;
+      };
+    }
+
+    // ---- Popup ----
+    function showPopup(el) {
+      if (activeEl === el) {
+        hidePopup();
+        return;
+      }
+
+      // Deactivate previous
+      if (activeEl) activeEl.classList.remove('active');
+      stopAudio();
+
+      activeEl = el;
+      el.classList.add('active');
+
+      const word        = el.textContent;
+      const translation = el.dataset.translation || '';
+      const audioSrc    = el.dataset.audio || '';
+
+      popupWord.textContent  = word;
+      popupTrans.textContent = translation || '—';
+
+      replayBtn.disabled = !audioSrc;
+      replayBtn.dataset.src = audioSrc;
+
+      popup.classList.add('visible');
+      overlay.classList.add('visible');
+
+      // Auto-play
+      if (audioSrc) playAudio(audioSrc);
+    }
+
+    function hidePopup() {
+      popup.classList.remove('visible');
+      overlay.classList.remove('visible');
+      if (activeEl) {
+        activeEl.classList.remove('active');
+        activeEl = null;
+      }
+      stopAudio();
+    }
+
+    // ---- Event listeners ----
+    storyBody.addEventListener('click', e => {
+      const el = e.target.closest('.word.clickable');
+      el ? showPopup(el) : hidePopup();
+    });
+
+    overlay.addEventListener('click', hidePopup);
+
+    replayBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      const src = replayBtn.dataset.src;
+      if (src) playAudio(src);
+    });
+
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') hidePopup();
+    });
+  </script>
+</body>
+</html>

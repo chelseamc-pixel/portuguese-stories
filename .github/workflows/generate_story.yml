@@ -1,0 +1,94 @@
+name: Generate Daily Portuguese Story
+
+on:
+  schedule:
+    # 9:30 PM PST (UTC-8) = 05:30 UTC
+    # Note: In summer (PDT, UTC-7) this fires at 10:30 PM local time.
+    # Adjust to '30 4 * * *' (05:30 UTC-7 = 10:30 PM PDT → 04:30 UTC) if desired.
+    - cron: '30 5 * * *'
+
+  # Manual trigger — useful for testing a specific date or dry run
+  workflow_dispatch:
+    inputs:
+      date:
+        description: 'Date to generate story for (YYYY-MM-DD). Blank = today.'
+        required: false
+        type: string
+        default: ''
+      dry_run:
+        description: 'Dry run — skip all API calls, test HTML structure only'
+        required: false
+        type: boolean
+        default: false
+      skip_email:
+        description: 'Build page but skip sending the email'
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  generate-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write   # needed for peaceiris/actions-gh-pages to push
+
+    steps:
+      # 1. Checkout source code (main branch)
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # 2. Set up Python
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      # 3. Install dependencies
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      # 4. Run unit tests (no API calls — fast sanity check before spending tokens)
+      - name: Run unit tests
+        run: pytest scripts/tests/ -v -m "not integration" --tb=short
+
+      # 5. Run the pipeline
+      - name: Generate story, audio, and HTML page
+        env:
+          GEMINI_API_KEY:       ${{ secrets.GEMINI_API_KEY }}
+          ELEVENLABS_API_KEY:   ${{ secrets.ELEVENLABS_API_KEY }}
+          ELEVENLABS_VOICE_ID:  ${{ secrets.ELEVENLABS_VOICE_ID }}
+          GMAIL_USER:           ${{ secrets.GMAIL_USER }}
+          GMAIL_APP_PASSWORD:   ${{ secrets.GMAIL_APP_PASSWORD }}
+          RECIPIENT_EMAIL:      ${{ secrets.RECIPIENT_EMAIL }}
+          GITHUB_USERNAME:      chelseamc-pixel
+          GITHUB_REPO:          portuguese-stories
+        run: |
+          DATE_ARG=""
+          if [ -n "${{ github.event.inputs.date }}" ]; then
+            DATE_ARG="--date ${{ github.event.inputs.date }}"
+          fi
+
+          EMAIL_ARG=""
+          if [ "${{ github.event.inputs.skip_email }}" = "true" ]; then
+            EMAIL_ARG="--no-email"
+          fi
+
+          DRY_ARG=""
+          if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
+            DRY_ARG="--dry-run"
+          fi
+
+          python scripts/run_pipeline.py $DATE_ARG $EMAIL_ARG $DRY_ARG
+
+      # 6. Deploy docs/ to gh-pages branch
+      #    force_orphan=true means each deploy is a fresh root commit —
+      #    binary audio files never accumulate in git history.
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./docs
+          publish_branch: gh-pages
+          force_orphan: true
+          commit_message: "story: ${{ github.run_id }}"
