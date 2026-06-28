@@ -42,7 +42,7 @@ def _get_client() -> genai.Client:
     return _client
 
 
-def _call_gemini(prompt: str, expect_json: bool = False, model_name: str = "gemini-2.0-flash") -> str:
+def _call_gemini(prompt: str, expect_json: bool = False, model_name: str = "gemini-1.5-flash") -> str:
     """
     Make a Gemini API call with basic error handling.
     If expect_json=True, strips markdown code fences before returning.
