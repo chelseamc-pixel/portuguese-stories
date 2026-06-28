@@ -20,6 +20,11 @@ on:
         required: false
         type: boolean
         default: false
+      skip_audio:
+        description: 'Skip ElevenLabs audio — generate story but no word audio'
+        required: false
+        type: boolean
+        default: false
       skip_email:
         description: 'Build page but skip sending the email'
         required: false
@@ -74,12 +79,17 @@ jobs:
             EMAIL_ARG="--no-email"
           fi
 
+          AUDIO_ARG=""
+          if [ "${{ github.event.inputs.skip_audio }}" = "true" ]; then
+            AUDIO_ARG="--no-audio"
+          fi
+
           DRY_ARG=""
           if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
             DRY_ARG="--dry-run"
           fi
 
-          python scripts/run_pipeline.py $DATE_ARG $EMAIL_ARG $DRY_ARG
+          python scripts/run_pipeline.py $DATE_ARG $EMAIL_ARG $AUDIO_ARG $DRY_ARG
 
       # 6. Deploy docs/ to gh-pages branch
       #    force_orphan=true means each deploy is a fresh root commit —

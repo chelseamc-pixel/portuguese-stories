@@ -11,6 +11,7 @@ Usage:
   python scripts/run_pipeline.py                    # Run for today
   python scripts/run_pipeline.py --date 2026-07-04  # Specific date
   python scripts/run_pipeline.py --no-email          # Skip email
+  python scripts/run_pipeline.py --no-audio          # Skip ElevenLabs audio generation
   python scripts/run_pipeline.py --dry-run           # Skip all API calls (test structure)
   python scripts/run_pipeline.py --test-email        # Only test SMTP credentials
 """
@@ -122,9 +123,15 @@ DRY_RUN_STORY = {
 # Main pipeline
 # ---------------------------------------------------------------------------
 
-def run(story_date: date, send_email: bool = True, dry_run: bool = False) -> dict:
+def run(story_date: date, send_email: bool = True, skip_audio: bool = False, dry_run: bool = False) -> dict:
     """
     Run the full pipeline for story_date.
+
+    Args:
+        story_date:  Date to generate story for
+        send_email:  Whether to send the nightly email
+        skip_audio:  If True, skip ElevenLabs audio generation (words won't have audio)
+        dry_run:     If True, skip all API calls (uses placeholder story)
 
     Returns story_data dict (useful for tests / programmatic use).
     """
@@ -141,9 +148,10 @@ def run(story_date: date, send_email: bool = True, dry_run: bool = False) -> dic
     story_url       = f"https://{github_username}.github.io/{github_repo}/"
 
     _divider("PORTUGUESE STORY PIPELINE")
-    logger.info(f"Date     : {story_date.isoformat()}")
-    logger.info(f"Story URL: {story_url}")
-    logger.info(f"Dry run  : {dry_run}")
+    logger.info(f"Date      : {story_date.isoformat()}")
+    logger.info(f"Story URL : {story_url}")
+    logger.info(f"Dry run   : {dry_run}")
+    logger.info(f"Skip audio: {skip_audio}")
     _divider()
 
     # ---- STEP 1: Story generation ----
@@ -160,15 +168,19 @@ def run(story_date: date, send_email: bool = True, dry_run: bool = False) -> dic
                     f"{story_data['validation']['english']['word_count']} words EN")
 
         # ---- STEP 2: Audio generation ----
-        logger.info("[STEP 2] Generating audio via ElevenLabs...")
-        el_key    = _require_env("ELEVENLABS_API_KEY")
-        voice_id  = os.environ.get("ELEVENLABS_VOICE_ID", DEFAULT_VOICE_ID)
-        word_to_audio = generate_all_audio(story_data, audio_dir, el_key, voice_id)
+        if skip_audio:
+            logger.info("[STEP 2] Audio skipped (--no-audio)")
+            word_to_audio = {}
+        else:
+            logger.info("[STEP 2] Generating audio via ElevenLabs...")
+            el_key   = _require_env("ELEVENLABS_API_KEY")
+            voice_id = os.environ.get("ELEVENLABS_VOICE_ID", DEFAULT_VOICE_ID)
+            word_to_audio = generate_all_audio(story_data, audio_dir, el_key, voice_id)
 
-        audio_val = validate_audio_files(word_to_audio, audio_dir)
-        logger.info(f"         ✓ {audio_val['ok']}/{audio_val['total']} audio files generated")
-        if not audio_val["all_passed"]:
-            logger.warning(f"         ⚠ Missing audio for: {audio_val['missing_files']}")
+            audio_val = validate_audio_files(word_to_audio, audio_dir)
+            logger.info(f"         ✓ {audio_val['ok']}/{audio_val['total']} audio files generated")
+            if not audio_val["all_passed"]:
+                logger.warning(f"         ⚠ Missing audio for: {audio_val['missing_files']}")
 
     # ---- STEP 3: Build HTML page ----
     logger.info("[STEP 3] Building HTML page...")
@@ -180,17 +192,16 @@ def run(story_date: date, send_email: bool = True, dry_run: bool = False) -> dic
     logger.info(f"         ✓ {html_out} ({html_val['size_bytes']:,} bytes)")
 
     # ---- STEP 4: Send email ----
-    if send_email and not dry_run:
+    if dry_run or not send_email:
+        reason = "DRY RUN" if dry_run else "--no-email"
+        logger.info(f"[STEP 4] Email skipped ({reason})")
+    else:
         logger.info("[STEP 4] Sending email via Gmail SMTP...")
         gmail_user  = _require_env("GMAIL_USER")
         gmail_pass  = _require_env("GMAIL_APP_PASSWORD")
         recipient   = os.environ.get("RECIPIENT_EMAIL", gmail_user)
         send_story_email(gmail_user, gmail_pass, recipient, story_url, story_data)
         logger.info(f"         ✓ Email sent to {recipient}")
-    elif send_email and dry_run:
-        logger.info("[STEP 4] DRY RUN — email skipped")
-    else:
-        logger.info("[STEP 4] Email skipped (--no-email)")
 
     _divider("PIPELINE COMPLETE ✓")
     logger.info(f"Open: {story_url}")
@@ -216,6 +227,10 @@ def main() -> None:
         help="Build page but skip sending the email."
     )
     parser.add_argument(
+        "--no-audio", action="store_true",
+        help="Skip ElevenLabs audio generation (words clickable but no sound)."
+    )
+    parser.add_argument(
         "--dry-run", action="store_true",
         help="Skip all API calls; use a placeholder story (tests page structure)."
     )
@@ -234,7 +249,7 @@ def main() -> None:
         sys.exit(0 if ok else 1)
 
     story_date = date.fromisoformat(args.date) if args.date else date.today()
-    run(story_date, send_email=not args.no_email, dry_run=args.dry_run)
+    run(story_date, send_email=not args.no_email, skip_audio=args.no_audio, dry_run=args.dry_run)
 
 
 if __name__ == "__main__":
