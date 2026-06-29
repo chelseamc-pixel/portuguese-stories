@@ -2,10 +2,8 @@ name: Generate Daily Portuguese Story
 
 on:
   schedule:
-    # 9:30 PM PST (UTC-8) = 05:30 UTC
-    # Note: In summer (PDT, UTC-7) this fires at 10:30 PM local time.
-    # Adjust to '30 4 * * *' (05:30 UTC-7 = 10:30 PM PDT → 04:30 UTC) if desired.
-    - cron: '30 5 * * *'
+    # 9:30 PM PDT (UTC-7) = 04:30 UTC
+    - cron: '30 4 * * *'
 
   # Manual trigger — useful for testing a specific date or dry run
   workflow_dispatch:

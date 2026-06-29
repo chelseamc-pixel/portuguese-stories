@@ -148,18 +148,7 @@ def send_story_email(
     story_url: str,
     story_data: dict,
 ) -> bool:
-    """
-    Send the daily story email.
-
-    Args:
-        gmail_user:         Your Gmail address (e.g. chelseamc@gmail.com)
-        gmail_app_password: 16-character Gmail App Password
-        recipient:          Who gets the email (usually same as gmail_user)
-        story_url:          Full URL to the GitHub Pages story
-        story_data:         dict from run_story_pipeline()
-
-    Returns True on success, raises on failure.
-    """
+    """Send the daily story email. Returns True on success, raises on failure."""
     subject = f"🇵🇹 Conto do dia: {story_data['title_pt']}"
 
     msg = MIMEMultipart("alternative")

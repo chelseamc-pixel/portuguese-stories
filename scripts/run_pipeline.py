@@ -156,7 +156,6 @@ def run(story_date: date, send_email: bool = True, skip_audio: bool = False, dry
     _divider()
 
     # ---- STEP 1: Story generation ----
-    # Pick today's narrator (deterministic per date — same day always = same voice)
     voice = pick_daily_voice(story_date)
     logger.info(f"Today's narrator: {voice['name']} ({voice['id']})")
 

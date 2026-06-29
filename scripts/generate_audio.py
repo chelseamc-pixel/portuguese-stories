@@ -2,15 +2,8 @@
 generate_audio.py
 -----------------
 Generates MP3 audio files for each unique Portuguese word using ElevenLabs.
-
-Key decisions:
-- Uses eleven_multilingual_v2 model (best quality for European Portuguese)
-- Generates one file per unique word (not per occurrence)
-- File names are MD5 hashes of the word to avoid special-character issues
-- Old audio files are deleted before generating new ones (keeps repo lean)
-- Rate-limits calls to avoid hitting ElevenLabs concurrency limits
-
-Debug tip: Set LOG_LEVEL=DEBUG to see per-word timing.
+One file per unique word, named by MD5 hash to handle accented characters.
+Old audio files are purged before each run to keep the repo lean.
 """
 
 import os
