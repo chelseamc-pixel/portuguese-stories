@@ -30,4 +30,14 @@ jobs:
         env:
           ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
           ELEVENLABS_VOICE_ID: ${{ github.event.inputs.voice_id || secrets.ELEVENLABS_VOICE_ID }}
+          ELEVENLABS_TEST_OUTPUT_DIR: ${{ github.workspace }}/test-audio
         run: python scripts/tests/test_elevenlabs.py
+
+      - name: Upload audio samples
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: elevenlabs-audio-samples
+          path: test-audio/
+          if-no-files-found: warn
+          retention-days: 3

@@ -11,6 +11,10 @@ Run locally:
 
 Run via GitHub Actions:
     Actions → Test ElevenLabs Audio → Run workflow
+
+To keep audio files after the run (e.g. for CI artifact upload), set:
+    ELEVENLABS_TEST_OUTPUT_DIR=/path/to/dir
+Otherwise files are written to a temp dir and deleted on exit.
 """
 
 import os
@@ -52,9 +56,18 @@ DRY_RUN_PT_STORY = (
 STORY_DATA = {"story_pt": DRY_RUN_PT_STORY}
 
 
-def run_elevenlabs_test(api_key: str, voice_id: str, voice_name: str = "") -> bool:
+def run_elevenlabs_test(api_key: str, voice_id: str, voice_name: str = "",
+                        audio_dir: Path | None = None) -> bool:
     """
     Generate audio for all words in the dry-run story and validate results.
+
+    Args:
+        api_key:    ElevenLabs API key
+        voice_id:   ElevenLabs voice ID to use
+        voice_name: Human-readable voice name (for logging)
+        audio_dir:  Directory to write MP3s into. If None, uses a temp dir
+                    that is deleted after this function returns.
+
     Returns True if all words have valid audio, False otherwise.
     """
     unique_words = extract_unique_words(DRY_RUN_PT_STORY)
@@ -68,14 +81,14 @@ def run_elevenlabs_test(api_key: str, voice_id: str, voice_name: str = "") -> bo
     logger.info(f"Words    : {', '.join(sorted(unique_words))}")
     logger.info("=" * 56)
 
-    with tempfile.TemporaryDirectory() as tmpdir:
-        audio_dir = Path(tmpdir) / "audio"
+    def _run(out_dir: Path) -> bool:
+        out_dir.mkdir(parents=True, exist_ok=True)
 
         # Generate audio
         logger.info("Generating audio files...")
         word_to_audio = generate_all_audio(
             STORY_DATA,
-            audio_dir,
+            out_dir,
             api_key,
             voice_id=voice_id,
             call_delay=0.3,
@@ -83,7 +96,7 @@ def run_elevenlabs_test(api_key: str, voice_id: str, voice_name: str = "") -> bo
 
         # Validate — must check expected count, not just the successful subset
         logger.info("Validating audio files...")
-        validation = validate_audio_files(word_to_audio, audio_dir)
+        validation = validate_audio_files(word_to_audio, out_dir)
 
         generated_count = len(word_to_audio)
         expected_count = len(unique_words)
@@ -101,6 +114,8 @@ def run_elevenlabs_test(api_key: str, voice_id: str, voice_name: str = "") -> bo
 
         if all_generated and validation["all_passed"]:
             logger.info("✓ ALL WORDS HAVE VALID AUDIO — ElevenLabs integration working!")
+            if out_dir:
+                logger.info(f"  Audio saved to: {out_dir}")
         else:
             if not all_generated:
                 failed = [w for w in unique_words if w not in word_to_audio]
@@ -110,14 +125,21 @@ def run_elevenlabs_test(api_key: str, voice_id: str, voice_name: str = "") -> bo
 
         # Show file sizes for a sample
         sample = list(word_to_audio.items())[:5]
-        logger.info("\nSample file sizes:")
-        for word, filename in sample:
-            filepath = audio_dir / filename
-            if filepath.exists():
-                logger.info(f"  '{word}' → {filepath.stat().st_size:,} bytes")
+        if sample:
+            logger.info("\nSample file sizes:")
+            for word, filename in sample:
+                filepath = out_dir / filename
+                if filepath.exists():
+                    logger.info(f"  '{word}' → {filepath.stat().st_size:,} bytes")
 
         logger.info("=" * 56)
         return all_generated and validation["all_passed"]
+
+    if audio_dir is not None:
+        return _run(audio_dir)
+    else:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            return _run(Path(tmpdir) / "audio")
 
 
 if __name__ == "__main__":
@@ -138,5 +160,9 @@ if __name__ == "__main__":
     voice_id = voice["id"]
     voice_name = voice["name"]
 
-    success = run_elevenlabs_test(api_key, voice_id, voice_name)
+    # If ELEVENLABS_TEST_OUTPUT_DIR is set, save audio there (for artifact upload).
+    output_dir_env = os.environ.get("ELEVENLABS_TEST_OUTPUT_DIR", "").strip()
+    audio_dir = Path(output_dir_env) if output_dir_env else None
+
+    success = run_elevenlabs_test(api_key, voice_id, voice_name, audio_dir=audio_dir)
     sys.exit(0 if success else 1)
