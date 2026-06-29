@@ -122,6 +122,8 @@ def build_html_page(
     topic_en_escaped = _escape(story_data["topic_en"])
     date_escaped = _escape(story_data["date_formatted"])
     fun_fact_escaped = _escape(story_data["fun_fact_pt"])
+    narrator = story_data.get("narrator", "")
+    narrator_html = f" &middot; {_escape(narrator)}" if narrator else ""
 
     html = f"""<!DOCTYPE html>
 <html lang="pt-PT">
@@ -325,7 +327,7 @@ def build_html_page(
 <body>
 
   <header class="header">
-    <div class="header-eyebrow">{date_escaped} &middot; {topic_en_escaped}</div>
+    <div class="header-eyebrow">{date_escaped} &middot; {topic_en_escaped}{narrator_html}</div>
     <div class="header-title">{title_escaped}</div>
   </header>
 

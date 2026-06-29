@@ -16,8 +16,10 @@ Debug tip: Set LOG_LEVEL=DEBUG to see per-word timing.
 import os
 import re
 import time
+import random
 import hashlib
 import logging
+from datetime import date
 from pathlib import Path
 
 from elevenlabs import ElevenLabs, VoiceSettings
@@ -34,11 +36,45 @@ PT_WORD_RE = re.compile(r'\b[a-zA-ZáàâãéêíóôõúüçÁÀÂÃÉÊÍÓÔ�
 # Use multilingual v2 for best European Portuguese quality
 MODEL_ID = "eleven_multilingual_v2"
 
-# Default voice: Rachel — works well with multilingual model.
-# Override with ELEVENLABS_VOICE_ID env var or pass voice_id explicitly.
-# For best continental PT results, browse https://elevenlabs.io/voice-library
-# and filter for "Portuguese" — pick a European female voice, copy the ID.
-DEFAULT_VOICE_ID = os.environ.get("ELEVENLABS_VOICE_ID", "21m00Tcm4TlvDq8ikWAM")
+# ---------------------------------------------------------------------------
+# European Portuguese female voice roster
+# Each entry: {"name": str, "id": str}
+# One is picked per story date (deterministic seed = same day always = same voice).
+# Override any day with ELEVENLABS_VOICE_ID env var (used in testing).
+# ---------------------------------------------------------------------------
+
+EUROPEAN_PT_VOICES = [
+    {"name": "Maria",    "id": "iLelOQ6m5mpSeNH8fRob"},  # friendly, clear — ideal for storytelling
+    {"name": "Joana",    "id": "nJ5NFqyKb8kn9JBPmo6i"},  # steady, warm, comforting
+    {"name": "Marta",    "id": "bBNhdwrIjl4fcVYiRbT2"},  # middle-aged, warm, self-assured
+    {"name": "Mariza",   "id": "zKjRewuiqTkXNUVAMwat"},  # clear, calm, friendly
+    {"name": "Benedita", "id": "NkpT2jezTenCDRKHkWiX"},  # bright, inviting, welcoming
+    {"name": "Daniela",  "id": "IZipF5JhqPlWzpduTV0E"},  # middle-aged, firm, grounded
+]
+
+def pick_daily_voice(story_date: date | None = None) -> dict:
+    """
+    Pick a European Portuguese voice for the given date.
+    Uses the date's ordinal as an RNG seed so the same date always returns
+    the same voice (re-runs are reproducible), but it rotates every day.
+
+    If ELEVENLABS_VOICE_ID env var is set, that ID is used instead (for testing).
+
+    Returns {"name": str, "id": str}.
+    """
+    override_id = os.environ.get("ELEVENLABS_VOICE_ID", "").strip()
+    if override_id:
+        # Find the name in our roster if possible, else label it "Custom"
+        match = next((v for v in EUROPEAN_PT_VOICES if v["id"] == override_id), None)
+        return match or {"name": "Custom", "id": override_id}
+
+    seed = story_date.toordinal() if story_date else None
+    rng = random.Random(seed)
+    return rng.choice(EUROPEAN_PT_VOICES)
+
+
+# Fallback for callers that still reference DEFAULT_VOICE_ID directly
+DEFAULT_VOICE_ID = EUROPEAN_PT_VOICES[0]["id"]
 
 # Delay between ElevenLabs calls (seconds) to stay within rate limits
 CALL_DELAY = 0.4

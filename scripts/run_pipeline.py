@@ -38,7 +38,7 @@ logger = logging.getLogger("run_pipeline")
 sys.path.insert(0, str(Path(__file__).parent))
 
 from generate_story import run_story_pipeline
-from generate_audio import generate_all_audio, validate_audio_files, DEFAULT_VOICE_ID
+from generate_audio import generate_all_audio, validate_audio_files, pick_daily_voice
 from build_page import build_html_page, validate_html_page
 from send_email import send_story_email, test_smtp_connection
 
@@ -112,6 +112,7 @@ DRY_RUN_STORY = {
         "viveram": "lived", "felizes": "happily", "para": "for", "sempre": "ever",
         "no": "in the",
     },
+    "narrator": "Maria",
     "validation": {
         "english": {"word_count": 42, "word_count_ok": True, "all_passed": True},
         "translations": {"coverage_pct": 100.0, "all_passed": True},
@@ -155,15 +156,21 @@ def run(story_date: date, send_email: bool = True, skip_audio: bool = False, dry
     _divider()
 
     # ---- STEP 1: Story generation ----
+    # Pick today's narrator (deterministic per date — same day always = same voice)
+    voice = pick_daily_voice(story_date)
+    logger.info(f"Today's narrator: {voice['name']} ({voice['id']})")
+
     if dry_run:
         logger.info("[STEP 1] DRY RUN — using placeholder story")
         story_data = {**DRY_RUN_STORY, "date": story_date.isoformat(),
-                      "date_formatted": story_date.strftime("%B %d, %Y")}
+                      "date_formatted": story_date.strftime("%B %d, %Y"),
+                      "narrator": voice["name"]}
         word_to_audio = {}
     else:
         logger.info("[STEP 1] Generating story via Gemini...")
         gemini_key = _require_env("GEMINI_API_KEY")
         story_data = run_story_pipeline(story_date, gemini_key)
+        story_data["narrator"] = voice["name"]
         logger.info(f"         ✓ '{story_data['title_pt']}' | "
                     f"{story_data['validation']['english']['word_count']} words EN")
 
@@ -172,10 +179,9 @@ def run(story_date: date, send_email: bool = True, skip_audio: bool = False, dry
             logger.info("[STEP 2] Audio skipped (--no-audio)")
             word_to_audio = {}
         else:
-            logger.info("[STEP 2] Generating audio via ElevenLabs...")
-            el_key   = _require_env("ELEVENLABS_API_KEY")
-            voice_id = os.environ.get("ELEVENLABS_VOICE_ID", DEFAULT_VOICE_ID)
-            word_to_audio = generate_all_audio(story_data, audio_dir, el_key, voice_id)
+            logger.info(f"[STEP 2] Generating audio via ElevenLabs (voice: {voice['name']})...")
+            el_key = _require_env("ELEVENLABS_API_KEY")
+            word_to_audio = generate_all_audio(story_data, audio_dir, el_key, voice["id"])
 
             audio_val = validate_audio_files(word_to_audio, audio_dir)
             logger.info(f"         ✓ {audio_val['ok']}/{audio_val['total']} audio files generated")
