@@ -8,7 +8,6 @@ Run: pytest scripts/tests/test_build_page.py -v
 """
 
 import sys
-import pytest
 import tempfile
 from pathlib import Path
 

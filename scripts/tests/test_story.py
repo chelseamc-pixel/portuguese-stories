@@ -21,13 +21,10 @@ from generate_story import (
     validate_translations,
     get_date_inspiration,
     generate_english_story,
-    translate_to_portuguese,
-    get_word_translations,
     run_story_pipeline,
     configure_gemini,
     PT_WORD_RE,
 )
-
 
 
 # ===========================================================================

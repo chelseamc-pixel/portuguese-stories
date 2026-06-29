@@ -73,7 +73,7 @@ def pick_daily_voice(story_date: date | None = None) -> dict:
     return rng.choice(EUROPEAN_PT_VOICES)
 
 
-# Fallback for callers that still reference DEFAULT_VOICE_ID directly
+# Used as the default parameter value in generate_word_audio / generate_all_audio
 DEFAULT_VOICE_ID = EUROPEAN_PT_VOICES[0]["id"]
 
 # Delay between ElevenLabs calls (seconds) to stay within rate limits
