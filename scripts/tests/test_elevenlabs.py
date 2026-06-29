@@ -26,7 +26,7 @@ from generate_audio import (
     generate_all_audio,
     validate_audio_files,
     extract_unique_words,
-    DEFAULT_VOICE_ID,
+    pick_daily_voice,
 )
 
 logging.basicConfig(
@@ -52,7 +52,7 @@ DRY_RUN_PT_STORY = (
 STORY_DATA = {"story_pt": DRY_RUN_PT_STORY}
 
 
-def run_elevenlabs_test(api_key: str, voice_id: str) -> bool:
+def run_elevenlabs_test(api_key: str, voice_id: str, voice_name: str = "") -> bool:
     """
     Generate audio for all words in the dry-run story and validate results.
     Returns True if all words have valid audio, False otherwise.
@@ -64,7 +64,7 @@ def run_elevenlabs_test(api_key: str, voice_id: str) -> bool:
     logger.info("=" * 56)
     logger.info(f"Story    : dry-run placeholder ({len(DRY_RUN_PT_STORY.split())} words)")
     logger.info(f"Unique   : {len(unique_words)} unique words to generate audio for")
-    logger.info(f"Voice ID : {voice_id}")
+    logger.info(f"Narrator : {voice_name} ({voice_id})")
     logger.info(f"Words    : {', '.join(sorted(unique_words))}")
     logger.info("=" * 56)
 
@@ -81,23 +81,32 @@ def run_elevenlabs_test(api_key: str, voice_id: str) -> bool:
             call_delay=0.3,
         )
 
-        # Validate
+        # Validate — must check expected count, not just the successful subset
         logger.info("Validating audio files...")
         validation = validate_audio_files(word_to_audio, audio_dir)
+
+        generated_count = len(word_to_audio)
+        expected_count = len(unique_words)
+        all_generated = generated_count == expected_count
 
         # Report
         logger.info("=" * 56)
         logger.info("RESULTS")
         logger.info("=" * 56)
-        logger.info(f"Total words  : {validation['total']}")
-        logger.info(f"Generated OK : {validation['ok']}")
-        logger.info(f"Missing files: {validation['missing_files'] or 'none'}")
-        logger.info(f"Too small    : {validation['too_small'] or 'none'}")
+        logger.info(f"Expected words : {expected_count}")
+        logger.info(f"Generated OK   : {generated_count}")
+        logger.info(f"Missing audio  : {expected_count - generated_count} words failed ElevenLabs call")
+        logger.info(f"Missing files  : {validation['missing_files'] or 'none'}")
+        logger.info(f"Too small      : {validation['too_small'] or 'none'}")
 
-        if validation["all_passed"]:
+        if all_generated and validation["all_passed"]:
             logger.info("✓ ALL WORDS HAVE VALID AUDIO — ElevenLabs integration working!")
         else:
-            logger.error("✗ SOME WORDS FAILED — see above for details")
+            if not all_generated:
+                failed = [w for w in unique_words if w not in word_to_audio]
+                logger.error(f"✗ {expected_count - generated_count} WORDS FAILED audio generation: {failed}")
+            if not validation["all_passed"]:
+                logger.error("✗ SOME GENERATED FILES ARE INVALID — see above for details")
 
         # Show file sizes for a sample
         sample = list(word_to_audio.items())[:5]
@@ -108,7 +117,7 @@ def run_elevenlabs_test(api_key: str, voice_id: str) -> bool:
                 logger.info(f"  '{word}' → {filepath.stat().st_size:,} bytes")
 
         logger.info("=" * 56)
-        return validation["all_passed"]
+        return all_generated and validation["all_passed"]
 
 
 if __name__ == "__main__":
@@ -123,7 +132,11 @@ if __name__ == "__main__":
         logger.error("ELEVENLABS_API_KEY is not set. Export it or add it to .env")
         sys.exit(1)
 
-    voice_id = os.environ.get("ELEVENLABS_VOICE_ID", DEFAULT_VOICE_ID).strip()
+    # pick_daily_voice() handles the empty-string env var case correctly:
+    # it uses ELEVENLABS_VOICE_ID only if non-empty, else picks from the roster.
+    voice = pick_daily_voice()
+    voice_id = voice["id"]
+    voice_name = voice["name"]
 
-    success = run_elevenlabs_test(api_key, voice_id)
+    success = run_elevenlabs_test(api_key, voice_id, voice_name)
     sys.exit(0 if success else 1)
