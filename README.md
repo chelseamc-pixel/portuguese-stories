@@ -1,6 +1,6 @@
 # 🇵🇹 Portuguese Daily Story
 
-A mobile-first web app that delivers a new 150-200 word children's story in **continental (European) Portuguese** every night at 9:30 PM — generated from date-inspired topics, translated by Gemini, and narrated word-by-word via ElevenLabs.
+A mobile-first web app that delivers a new 150-200 word children's story in **continental (European) Portuguese** every evening — generated from date-inspired topics, translated by Gemini, and narrated word-by-word via ElevenLabs.
 
 **Live URL:** `https://chelseamc-pixel.github.io/portuguese-stories/`
 
@@ -8,11 +8,39 @@ A mobile-first web app that delivers a new 150-200 word children's story in **co
 
 ## How it works
 
-1. **GitHub Action** fires at 9:30 PM PST (05:30 UTC)
-2. **Gemini** generates a 150-200 word English story inspired by notable events for that date, then translates it to continental Portuguese and provides per-word English translations
-3. **ElevenLabs** generates an MP3 audio clip for each unique word
-4. A **self-contained HTML page** is built and deployed to GitHub Pages
-5. A **Gmail email** is sent with a preview and link
+1. **GitHub Action** fires at 6:00 PM PDT (01:00 UTC)
+2. **Gemini** fetches 5 notable events/people for that calendar date; one is picked at random as the story topic
+3. **Gemini** writes a 150-200 word English children's story from that topic, translates it to continental Portuguese, and provides per-word English translations
+4. **ElevenLabs** generates an MP3 audio clip for each unique word, narrated by a voice from the rotating continental Portuguese roster
+5. A **self-contained HTML page** is built and deployed to GitHub Pages
+6. A **Gmail email** is sent with a preview and link
+
+---
+
+## Story page features
+
+- Tap any word (including title words) to see its English translation in a popup
+- Tap the speaker icon in the popup to hear the word pronounced
+- **EN** button at the top toggles the full story to English and back
+- A Portuguese fun fact appears at the bottom of every story
+
+---
+
+## Voice roster
+
+Seven continental (European) Portuguese voices rotate daily — the same date always gets the same voice, so re-runs are reproducible. The narrator's name appears in the page header.
+
+| Name | Gender | Notes |
+|---|---|---|
+| Maria | Female | Friendly, clear — ideal for storytelling |
+| Joana | Female | Steady, warm, comforting |
+| Marta | Female | Middle-aged, warm, self-assured |
+| Mariza | Female | Clear, calm, friendly |
+| Benedita | Female | Bright, inviting, welcoming |
+| Paulo PT | Male | Lisbon accent |
+| Lourenço | Male | Man from Lisbon |
+
+To override the voice for a specific run, set `ELEVENLABS_VOICE_ID` in GitHub Secrets to any ElevenLabs voice ID. Leave it blank to use the daily rotation.
 
 ---
 
@@ -29,12 +57,6 @@ If you shared your old key anywhere, regenerate it at:
 2. ⚠️ **You'll need the Starter plan ($5/month)** — the free tier allows 10,000 chars/month but this app uses ~14,000/month (one story/day × ~80 words × ~6 chars each)
 3. After signing up, go to your **Profile → API Keys → Create API Key**
 4. Copy your key — you'll need it in Step 4
-
-**Choosing a voice (optional but recommended):**
-- Go to **Voice Library** and filter by Language: Portuguese
-- Look for a female European Portuguese voice (labelled "Portugal" or "European")
-- Click it → **Add to my voices** → copy the Voice ID from your **My Voices** tab
-- If you skip this, the default Rachel voice with the multilingual model still sounds natural
 
 ### 3. Set up Gmail App Password
 
@@ -71,9 +93,9 @@ Add each of these:
 
 | Secret name | Value |
 |---|---|
-| `GEMINI_API_KEY` | Your new Gemini API key |
+| `GEMINI_API_KEY` | Your Gemini API key |
 | `ELEVENLABS_API_KEY` | Your ElevenLabs API key |
-| `ELEVENLABS_VOICE_ID` | Voice ID from ElevenLabs (optional — leave blank to use default) |
+| `ELEVENLABS_VOICE_ID` | Leave blank to use daily voice rotation |
 | `GMAIL_USER` | `chelseamc@gmail.com` |
 | `GMAIL_APP_PASSWORD` | Your 16-char Gmail App Password |
 | `RECIPIENT_EMAIL` | `chelseamc@gmail.com` |
@@ -136,19 +158,21 @@ python scripts/run_pipeline.py --date 2026-07-04 --no-email
 portuguese-stories/
 ├── .github/
 │   └── workflows/
-│       └── generate_story.yml   # Nightly cron + manual trigger
+│       ├── generate_story.yml       # Nightly cron + manual trigger
+│       └── test_elevenlabs.yml      # Isolated ElevenLabs audio test
 ├── scripts/
-│   ├── generate_story.py        # Gemini: story generation + translation
-│   ├── generate_audio.py        # ElevenLabs: per-word audio
-│   ├── build_page.py            # HTML page builder
-│   ├── send_email.py            # Gmail SMTP
-│   ├── run_pipeline.py          # Orchestrator (entry point)
+│   ├── generate_story.py            # Gemini: story generation + translation
+│   ├── generate_audio.py            # ElevenLabs: per-word audio + voice roster
+│   ├── build_page.py                # HTML page builder
+│   ├── send_email.py                # Gmail SMTP
+│   ├── run_pipeline.py              # Orchestrator (entry point)
 │   └── tests/
-│       ├── test_story.py        # Story generation unit + integration tests
-│       ├── test_build_page.py   # HTML builder tests
-│       └── test_pipeline_dryrun.py  # End-to-end dry-run test
+│       ├── test_story.py            # Story generation unit + integration tests
+│       ├── test_build_page.py       # HTML builder tests
+│       ├── test_pipeline_dryrun.py  # End-to-end dry-run test
+│       └── test_elevenlabs.py       # Isolated ElevenLabs audio test
 ├── docs/
-│   └── index.html               # Generated daily (served by GitHub Pages)
+│   └── index.html                   # Generated daily (served by GitHub Pages)
 ├── requirements.txt
 ├── .env.example
 └── .gitignore
@@ -158,7 +182,8 @@ portuguese-stories/
 
 ## Scheduling notes
 
-- The cron `30 5 * * *` fires at **05:30 UTC = 9:30 PM PST** (winter) / **10:30 PM PDT** (summer)
+- The cron `0 1 * * *` fires at **01:00 UTC = 6:00 PM PDT** (summer) / **5:00 PM PST** (winter)
+- GitHub Actions scheduled triggers are best-effort — delays of 15-30 minutes are normal
 - GitHub Pages deployment takes 1-3 minutes after the action completes
 - The email is sent after deployment, so the link is live when you receive it
 
