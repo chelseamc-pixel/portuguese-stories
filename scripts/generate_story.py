@@ -14,6 +14,7 @@ Debug tip: Set LOG_LEVEL=DEBUG in your environment to see full API responses.
 import os
 import re
 import json
+import random
 import logging
 from datetime import date
 
@@ -80,8 +81,9 @@ def get_date_inspiration(story_date: date) -> str:
     prompt = f"""List 5 notable historical events, famous people's birthdays, or cultural
 celebrations associated with {story_date.strftime('%B %d')} (any year).
 
-Focus on topics that make great stories for 5-year-olds: scientists, artists,
-athletes, explorers, inventors, cultural festivals, space missions, etc.
+Focus on topics that make great stories for 5-year-olds. Prioritise variety across
+these categories: artists, musicians, athletes, animals, food and cooking, nature,
+festivals and traditions, inventors, explorers, and storytellers.
 Avoid violent events or complex political topics.
 
 Format as a simple numbered list. Keep each item to one sentence."""
@@ -90,6 +92,21 @@ Format as a simple numbered list. Keep each item to one sentence."""
     logger.info(f"Got date inspiration for {story_date.strftime('%B %d')}")
     logger.debug(f"Inspiration:\n{result}")
     return result
+
+
+def pick_random_topic(inspiration: str) -> str:
+    """
+    Parse the numbered list from get_date_inspiration() and pick one entry at random.
+    Falls back to the full inspiration string if parsing fails.
+    """
+    lines = [line.strip() for line in inspiration.strip().splitlines() if line.strip()]
+    topics = [re.sub(r'^\d+\.\s*', '', line) for line in lines if re.match(r'^\d+\.', line)]
+    if not topics:
+        logger.warning("Could not parse inspiration list — using full text as topic")
+        return inspiration
+    chosen = random.choice(topics)
+    logger.info(f"Randomly selected topic: {chosen}")
+    return chosen
 
 
 # ---------------------------------------------------------------------------
@@ -101,13 +118,11 @@ def generate_english_story(story_date: date, inspiration: str) -> dict:
     Generate a 150-200 word English children's story based on the date inspiration.
     Returns a dict with keys: topic, story, word_count, fun_fact
     """
-    prompt = f"""Write a short story for a 5-year-old child based on the inspiration below for {story_date.strftime('%B %d')}.
+    prompt = f"""Write a short story for a 5-year-old child based on this topic for {story_date.strftime('%B %d')}:
 
-INSPIRATION:
-{inspiration}
+TOPIC: {inspiration}
 
 REQUIREMENTS:
-- Pick ONE topic from above that makes the most engaging story for a small child
 - The story must be between 150 and 200 words — count carefully
 - Use simple vocabulary and short sentences (5-year-old level)
 - Structure: clear beginning, middle, and end
@@ -319,13 +334,14 @@ def run_story_pipeline(story_date: date, gemini_api_key: str, max_retries: int =
     # 1. Date inspiration
     logger.info("[1/5] Getting date inspiration...")
     inspiration = get_date_inspiration(story_date)
+    topic = pick_random_topic(inspiration)
 
     # 2. Generate English story (retry if word count is off)
     logger.info("[2/5] Generating English story...")
     story_data = None
     validation = None
     for attempt in range(1, max_retries + 1):
-        story_data = generate_english_story(story_date, inspiration)
+        story_data = generate_english_story(story_date, topic)
         validation = validate_english_story(story_data)
         if validation["word_count_ok"]:
             break
