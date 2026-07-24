@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#f7f4ee">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>O Hiram e a Cidade Mágica nas Nuvens</title>
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    :root {
+      --green: #2c5f2e;
+      --green-light: #e8f5e9;
+      --green-mid: #3d7a3f;
+      --bg: #f7f4ee;
+      --surface: #ffffff;
+      --text: #1c1c1e;
+      --text-muted: #6e6e73;
+      --popup-bg: #1c1c1e;
+      --popup-text: #f5f5f7;
+      --popup-sub: #aeaeb2;
+      --radius: 16px;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Georgia', 'Times New Roman', serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ---- Header ---- */
+    .header {
+      position: sticky;
+      top: 0;
+      z-index: 200;
+      background: var(--green);
+      color: #fff;
+      padding: 14px 20px 16px;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+    .header-main { flex: 1; min-width: 0; }
+    .header-eyebrow {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.6px;
+      text-transform: uppercase;
+      opacity: 0.75;
+    }
+    .header-title {
+      font-size: 19px;
+      font-weight: 700;
+      margin-top: 5px;
+      line-height: 1.3;
+    }
+
+    /* Clickable words inside the title (white text context) */
+    .header-title .word.clickable {
+      cursor: pointer;
+      border-radius: 4px;
+      padding: 1px 0;
+      transition: background 0.12s;
+    }
+    .header-title .word.clickable:active {
+      background: rgba(255,255,255,0.18);
+    }
+    .header-title .word.active {
+      background: rgba(255,255,255,0.22);
+    }
+
+    /* EN/PT toggle button */
+    .toggle-btn {
+      flex-shrink: 0;
+      background: transparent;
+      border: 1.5px solid rgba(255,255,255,0.55);
+      color: rgba(255,255,255,0.9);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      padding: 5px 11px;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+      margin-top: 2px;
+    }
+    .toggle-btn.en-active {
+      background: rgba(255,255,255,0.9);
+      color: var(--green);
+      border-color: transparent;
+    }
+
+    /* ---- Story ---- */
+    .story-wrap {
+      padding: 26px 22px 140px;
+      max-width: 640px;
+      margin: 0 auto;
+    }
+    .story-body {
+      font-size: 21px;
+      line-height: 1.9;
+      letter-spacing: 0.01em;
+      color: var(--text);
+    }
+
+    /* ---- Word spans ---- */
+    .word { display: inline; }
+    .word.clickable {
+      cursor: pointer;
+      border-radius: 4px;
+      padding: 1px 0;
+      transition: background 0.12s;
+    }
+    .word.clickable:active { background: rgba(44, 95, 46, 0.18); }
+    .word.active { background: rgba(44, 95, 46, 0.22); }
+
+    /* ---- Fun fact ---- */
+    .fun-fact {
+      margin-top: 32px;
+      background: var(--green-light);
+      border-left: 4px solid var(--green);
+      border-radius: 0 10px 10px 0;
+      padding: 14px 18px;
+    }
+    .fun-fact-label {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: var(--green);
+      margin-bottom: 6px;
+    }
+    .fun-fact-text {
+      font-size: 15px;
+      line-height: 1.65;
+      color: var(--text);
+    }
+
+    /* ---- Overlay ---- */
+    .overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 300;
+    }
+    .overlay.visible { display: block; }
+
+    /* ---- Popup card ---- */
+    .popup {
+      display: none;
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 400;
+      padding: 12px 16px max(24px, env(safe-area-inset-bottom));
+    }
+    .popup.visible { display: block; }
+
+    .popup-card {
+      background: var(--popup-bg);
+      border-radius: var(--radius);
+      padding: 18px 20px 20px;
+      max-width: 480px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      box-shadow: 0 12px 48px rgba(0,0,0,0.35);
+    }
+
+    .popup-info { flex: 1; min-width: 0; }
+    .popup-word {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--popup-text);
+      line-height: 1.2;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .popup-translation {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: 15px;
+      color: var(--popup-sub);
+      margin-top: 5px;
+    }
+
+    /* Speaker button */
+    .replay-btn {
+      flex-shrink: 0;
+      width: 46px;
+      height: 46px;
+      border-radius: 50%;
+      border: none;
+      background: var(--green);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s;
+    }
+    .replay-btn:active { transform: scale(0.92); }
+    .replay-btn:disabled { background: #3a3a3c; opacity: 0.5; cursor: default; }
+    .replay-btn.playing { background: var(--green-mid); }
+    .replay-btn svg { width: 22px; height: 22px; fill: white; }
+  </style>
+</head>
+<body>
+
+  <header class="header">
+    <div class="header-main">
+      <div class="header-eyebrow">July 24, 2026 &middot; Hiram Bingham finds the secret city of Machu Picchu on July 24, 1911 &middot; Maria</div>
+      <div class="header-title" id="header-title"><span class="word clickable" data-translation="the" data-audio="audio/word_d956797521.mp3">O</span> <span class="word clickable" data-translation="Hiram" data-audio="audio/word_ce82e095eb.mp3">Hiram</span> <span class="word clickable" data-translation="and" data-audio="audio/word_e1671797c5.mp3">e</span> <span class="word clickable" data-translation="the" data-audio="audio/word_0cc175b9c0.mp3">a</span> <span class="word clickable" data-translation="city" data-audio="audio/word_02ea6cbd71.mp3">Cidade</span> <span class="word">Mágica</span> <span class="word">nas</span> <span class="word clickable" data-translation="clouds" data-audio="audio/word_1561e7e53e.mp3">Nuvens</span></div>
+    </div>
+    <button class="toggle-btn" id="toggle-lang" title="See in English" aria-label="Toggle language">EN</button>
+  </header>
+
+  <div class="story-wrap">
+    <div class="story-body" id="story-body"><span class="word clickable" data-translation="was" data-audio="audio/word_cf5c0a6a33.mp3">Era</span> <span class="word clickable" data-translation="a" data-audio="audio/word_18f8891c64.mp3">uma</span> <span class="word clickable" data-translation="time" data-audio="audio/word_26ea5d2204.mp3">vez</span> <span class="word clickable" data-translation="a" data-audio="audio/word_0dd00e33b6.mp3">um</span> <span class="word clickable" data-translation="explorer" data-audio="audio/word_fc4e74c0f6.mp3">explorador</span> <span class="word clickable" data-translation="very" data-audio="audio/word_7478c6c42f.mp3">muito</span> <span class="word clickable" data-translation="friendly" data-audio="audio/word_db9568029e.mp3">simpático</span> <span class="word clickable" data-translation="called" data-audio="audio/word_754aef25db.mp3">chamado</span> <span class="word clickable" data-translation="Hiram" data-audio="audio/word_ce82e095eb.mp3">Hiram</span>, <span class="word clickable" data-translation="that" data-audio="audio/word_8cfbcfcd27.mp3">que</span> <span class="word clickable" data-translation="set off" data-audio="audio/word_249123045f.mp3">partiu</span> <span class="word clickable" data-translation="in a" data-audio="audio/word_0dfb2d09ae.mp3">numa</span> <span class="word clickable" data-translation="big" data-audio="audio/word_7a3e1c7c45.mp3">grande</span> <span class="word clickable" data-translation="adventure" data-audio="audio/word_d1d0f023f0.mp3">aventura</span>. <span class="word clickable" data-translation="was" data-audio="audio/word_cf5c0a6a33.mp3">Era</span> <span class="word clickable" data-translation="a" data-audio="audio/word_0dd00e33b6.mp3">um</span> <span class="word clickable" data-translation="day" data-audio="audio/word_465b1f70b5.mp3">dia</span> <span class="word clickable" data-translation="warm" data-audio="audio/word_a1be078d77.mp3">quentinho</span> <span class="word clickable" data-translation="of" data-audio="audio/word_5f02f08893.mp3">de</span> <span class="word clickable" data-translation="July" data-audio="audio/word_c9f694bb74.mp3">julho</span> <span class="word clickable" data-translation="in the" data-audio="audio/word_7fa3b767c4.mp3">no</span> <span class="word clickable" data-translation="beautiful" data-audio="audio/word_1c0ef710eb.mp3">lindo</span> <span class="word clickable" data-translation="country" data-audio="audio/word_dedd48b9fd.mp3">país</span> <span class="word clickable" data-translation="of the" data-audio="audio/word_d4579b2688.mp3">do</span> <span class="word clickable" data-translation="Peru" data-audio="audio/word_32e8419a7e.mp3">Peru</span>. <span class="word clickable" data-translation="the" data-audio="audio/word_d956797521.mp3">O</span> <span class="word clickable" data-translation="Hiram" data-audio="audio/word_ce82e095eb.mp3">Hiram</span> <span class="word clickable" data-translation="wanted" data-audio="audio/word_72c7d0a764.mp3">queria</span> <span class="word clickable" data-translation="to find" data-audio="audio/word_8f5e15b75b.mp3">encontrar</span> <span class="word clickable" data-translation="a" data-audio="audio/word_18f8891c64.mp3">uma</span> <span class="word clickable" data-translation="city" data-audio="audio/word_02ea6cbd71.mp3">cidade</span> <span class="word clickable" data-translation="secret" data-audio="audio/word_4f356e7189.mp3">secreta</span>, <span class="word clickable" data-translation="hidden" data-audio="audio/word_7a82138484.mp3">escondida</span> <span class="word clickable" data-translation="in the" data-audio="audio/word_7fa3b767c4.mp3">no</span> <span class="word clickable" data-translation="high" data-audio="audio/word_329d0259b8.mp3">alto</span> <span class="word clickable" data-translation="of the" data-audio="audio/word_2a6571da26.mp3">das</span> <span class="word clickable" data-translation="mountains" data-audio="audio/word_7349546feb.mp3">montanhas</span>. <span class="word clickable" data-translation="he" data-audio="audio/word_7c4edbcefc.mp3">Ele</span> <span class="word clickable" data-translation="prepared" data-audio="audio/word_7c152546a7.mp3">preparou</span> <span class="word clickable" data-translation="the" data-audio="audio/word_0cc175b9c0.mp3">a</span> <span class="word clickable" data-translation="her" data-audio="audio/word_370e807f0d.mp3">sua</span> <span class="word clickable" data-translation="backpack" data-audio="audio/word_f23c82476d.mp3">mochila</span> <span class="word clickable" data-translation="big" data-audio="audio/word_7a3e1c7c45.mp3">grande</span> <span class="word clickable" data-translation="and" data-audio="audio/word_e1671797c5.mp3">e</span> <span class="word clickable" data-translation="started" data-audio="audio/word_25db1d2b41.mp3">começou</span> <span class="word clickable" data-translation="the" data-audio="audio/word_0cc175b9c0.mp3">a</span> <span class="word clickable" data-translation="to walk" data-audio="audio/word_d37169640f.mp3">caminhar</span>. <span class="word clickable" data-translation="step" data-audio="audio/word_76f8f40f6b.mp3">Passo</span> <span class="word clickable" data-translation="the" data-audio="audio/word_0cc175b9c0.mp3">a</span> <span class="word clickable" data-translation="step" data-audio="audio/word_76f8f40f6b.mp3">passo</span>, <span class="word clickable" data-translation="step" data-audio="audio/word_76f8f40f6b.mp3">passo</span> <span class="word clickable" data-translation="the" data-audio="audio/word_0cc175b9c0.mp3">a</span> <span class="word clickable" data-translation="step" data-audio="audio/word_76f8f40f6b.mp3">passo</span>! <span class="word clickable" data-translation="the" data-audio="audio/word_d956797521.mp3">O</span> <span class="word clickable" data-translation="Hiram" data-audio="audio/word_ce82e095eb.mp3">Hiram</span> <span class="word clickable" data-translation="climbed" data-audio="audio/word_e441a09fc0.mp3">subiu</span>, <span class="word clickable" data-translation="climbed" data-audio="audio/word_e441a09fc0.mp3">subiu</span>, <span class="word clickable" data-translation="climbed" data-audio="audio/word_e441a09fc0.mp3">subiu</span> <span class="word clickable" data-translation="until" data-audio="audio/word_fab1082de9.mp3">até</span> <span class="word clickable" data-translation="to the" data-audio="audio/word_7577823544.mp3">às</span> <span class="word clickable" data-translation="clouds" data-audio="audio/word_1561e7e53e.mp3">nuvens</span> <span class="word clickable" data-translation="white" data-audio="audio/word_3f5ef335cf.mp3">brancas</span> <span class="word clickable" data-translation="and" data-audio="audio/word_e1671797c5.mp3">e</span> <span class="word clickable" data-translation="fluffy" data-audio="audio/word_4df14c7b0e.mp3">fofas</span>. <span class="word clickable" data-translation="the" data-audio="audio/word_d956797521.mp3">O</span> <span class="word clickable" data-translation="air" data-audio="audio/word_c582dec943.mp3">ar</span> <span class="word clickable" data-translation="was" data-audio="audio/word_cf5c0a6a33.mp3">era</span> <span class="word clickable" data-translation="cool" data-audio="audio/word_aac1fceafa.mp3">fresquinho</span> <span class="word clickable" data-translation="and" data-audio="audio/word_e1671797c5.mp3">e</span> <span class="word clickable" data-translation="sweet" data-audio="audio/word_614216bb4c.mp3">doce</span>. <span class="word clickable" data-translation="in the" data-audio="audio/word_7fa3b767c4.mp3">No</span> <span class="word clickable" data-translation="high" data-audio="audio/word_329d0259b8.mp3">alto</span> <span class="word clickable" data-translation="of the" data-audio="audio/word_5ca2aa845c.mp3">da</span> <span class="word clickable" data-translation="mountain" data-audio="audio/word_28ad96ba47.mp3">montanha</span>, <span class="word clickable" data-translation="he" data-audio="audio/word_7c4edbcefc.mp3">ele</span> <span class="word clickable" data-translation="saw" data-audio="audio/word_9d3a6c27f0.mp3">viu</span> <span class="word clickable" data-translation="llamas" data-audio="audio/word_85930216e4.mp3">lhamas</span> <span class="word clickable" data-translation="cuddly" data-audio="audio/word_8b369ba5e8.mp3">fofinhas</span> <span class="word clickable" data-translation="the" data-audio="audio/word_0cc175b9c0.mp3">a</span> <span class="word clickable" data-translation="to eat" data-audio="audio/word_17cb48b129.mp3">comer</span> <span class="word clickable" data-translation="the" data-audio="audio/word_0cc175b9c0.mp3">a</span> <span class="word clickable" data-translation="grass" data-audio="audio/word_4c8f2161ce.mp3">relva</span> <span class="word clickable" data-translation="green" data-audio="audio/word_f9a38310c0.mp3">verdinha</span>. <span class="word clickable" data-translation="the" data-audio="audio/word_f970e2767d.mp3">As</span> <span class="word clickable" data-translation="llamas" data-audio="audio/word_85930216e4.mp3">lhamas</span> <span class="word clickable" data-translation="sweet" data-audio="audio/word_ecd69bde89.mp3">mimosas</span> <span class="word clickable" data-translation="looked" data-audio="audio/word_be60587aa5.mp3">olharam</span> <span class="word clickable" data-translation="for" data-audio="audio/word_d3afac6e06.mp3">para</span> <span class="word clickable" data-translation="he" data-audio="audio/word_7c4edbcefc.mp3">ele</span> <span class="word clickable" data-translation="and" data-audio="audio/word_e1671797c5.mp3">e</span> <span class="word clickable" data-translation="shook" data-audio="audio/word_0e11ede603.mp3">abanaram</span> <span class="word clickable" data-translation="the" data-audio="audio/word_f970e2767d.mp3">as</span> <span class="word clickable" data-translation="ears" data-audio="audio/word_a3ff82e6ea.mp3">orelhas</span>. <span class="word clickable" data-translation="of" data-audio="audio/word_5f02f08893.mp3">De</span> <span class="word clickable" data-translation="suddenly" data-audio="audio/word_add88028d2.mp3">repente</span>, <span class="word clickable" data-translation="the" data-audio="audio/word_d956797521.mp3">o</span> <span class="word clickable" data-translation="fog" data-audio="audio/word_d745388d51.mp3">nevoeiro</span> <span class="word clickable" data-translation="disappeared" data-audio="audio/word_7989f7b9a5.mp3">desapareceu</span>. <span class="word clickable" data-translation="the" data-audio="audio/word_d956797521.mp3">O</span> <span class="word clickable" data-translation="Hiram" data-audio="audio/word_ce82e095eb.mp3">Hiram</span> <span class="word clickable" data-translation="stayed" data-audio="audio/word_7b8dfaee10.mp3">ficou</span> <span class="word clickable" data-translation="amazed" data-audio="audio/word_f6a9d146ef.mp3">maravilhado</span> <span class="word clickable" data-translation="of" data-audio="audio/word_5f02f08893.mp3">de</span> <span class="word clickable" data-translation="so much" data-audio="audio/word_6b1bac6441.mp3">tanta</span> <span class="word clickable" data-translation="joy" data-audio="audio/word_f8f01ea0ac.mp3">alegria</span>! <span class="word clickable" data-translation="same" data-audio="audio/word_31e9e536e5.mp3">Mesmo</span> <span class="word clickable" data-translation="to the" data-audio="audio/word_c9759ceb64.mp3">à</span> <span class="word clickable" data-translation="her" data-audio="audio/word_370e807f0d.mp3">sua</span> <span class="word clickable" data-translation="front" data-audio="audio/word_007e610c52.mp3">frente</span> <span class="word clickable" data-translation="was" data-audio="audio/word_1df33d7ab3.mp3">estava</span> <span class="word clickable" data-translation="a" data-audio="audio/word_18f8891c64.mp3">uma</span> <span class="word clickable" data-translation="city" data-audio="audio/word_02ea6cbd71.mp3">cidade</span> <span class="word clickable" data-translation="beautiful" data-audio="audio/word_eaf450085c.mp3">linda</span>, <span class="word clickable" data-translation="made" data-audio="audio/word_15ef1556a5.mp3">feita</span> <span class="word clickable" data-translation="of" data-audio="audio/word_5f02f08893.mp3">de</span> <span class="word clickable" data-translation="stones" data-audio="audio/word_aae8e9312b.mp3">pedras</span> <span class="word clickable" data-translation="grey" data-audio="audio/word_a03d0445c7.mp3">cinzentas</span> <span class="word clickable" data-translation="and" data-audio="audio/word_e1671797c5.mp3">e</span> <span class="word clickable" data-translation="very" data-audio="audio/word_7478c6c42f.mp3">muito</span> <span class="word clickable" data-translation="old" data-audio="audio/word_c5390847d1.mp3">antigas</span>. <span class="word clickable" data-translation="was called" data-audio="audio/word_9e5b7722d5.mp3">Chamava</span>-<span class="word clickable" data-translation="if" data-audio="audio/word_efad7abb32.mp3">se</span> <span class="word clickable" data-translation="Machu" data-audio="audio/word_392281f612.mp3">Machu</span> <span class="word clickable" data-translation="Picchu" data-audio="audio/word_987e85fd62.mp3">Picchu</span>. <span class="word clickable" data-translation="had" data-audio="audio/word_845ccfd309.mp3">Tinha</span> <span class="word clickable" data-translation="houses" data-audio="audio/word_7928a235d5.mp3">casas</span> <span class="word clickable" data-translation="of" data-audio="audio/word_5f02f08893.mp3">de</span> <span class="word clickable" data-translation="stone" data-audio="audio/word_38afefd32e.mp3">pedra</span>, <span class="word clickable" data-translation="grassy fields" data-audio="audio/word_186a978440.mp3">relvados</span> <span class="word clickable" data-translation="green" data-audio="audio/word_5e006f4a47.mp3">verdes</span> <span class="word clickable" data-translation="and" data-audio="audio/word_e1671797c5.mp3">e</span> <span class="word clickable" data-translation="stairs" data-audio="audio/word_848e0174e2.mp3">escadas</span> <span class="word clickable" data-translation="very" data-audio="audio/word_7478c6c42f.mp3">muito</span> <span class="word clickable" data-translation="tall" data-audio="audio/word_468059103a.mp3">altas</span> <span class="word clickable" data-translation="for" data-audio="audio/word_d3afac6e06.mp3">para</span> <span class="word clickable" data-translation="to climb" data-audio="audio/word_8344c8504c.mp3">subir</span>. <span class="word clickable" data-translation="this" data-audio="audio/word_12ad8f0c5c.mp3">Esta</span> <span class="word clickable" data-translation="city" data-audio="audio/word_02ea6cbd71.mp3">cidade</span> <span class="word clickable" data-translation="so" data-audio="audio/word_0ff8c1e9f1.mp3">tão</span> <span class="word clickable" data-translation="special" data-audio="audio/word_4c4c0d4e49.mp3">especial</span> <span class="word clickable" data-translation="had" data-audio="audio/word_845ccfd309.mp3">tinha</span> <span class="word clickable" data-translation="been" data-audio="audio/word_3b070dcca9.mp3">estado</span> <span class="word clickable" data-translation="the" data-audio="audio/word_0cc175b9c0.mp3">a</span> <span class="word clickable" data-translation="to sleep" data-audio="audio/word_bb3a214d56.mp3">dormir</span> <span class="word clickable" data-translation="in" data-audio="audio/word_47e2e8c3fd.mp3">em</span> <span class="word clickable" data-translation="silence" data-audio="audio/word_f9e5061df6.mp3">silêncio</span> <span class="word clickable" data-translation="during" data-audio="audio/word_a086451de7.mp3">durante</span> <span class="word clickable" data-translation="very" data-audio="audio/word_7478c6c42f.mp3">muito</span>, <span class="word clickable" data-translation="very" data-audio="audio/word_7478c6c42f.mp3">muito</span> <span class="word clickable" data-translation="time" data-audio="audio/word_e34c64a052.mp3">tempo</span>. <span class="word clickable" data-translation="the" data-audio="audio/word_d956797521.mp3">O</span> <span class="word clickable" data-translation="Hiram" data-audio="audio/word_ce82e095eb.mp3">Hiram</span> <span class="word clickable" data-translation="gave" data-audio="audio/word_375dcc1c4d.mp3">deu</span> <span class="word clickable" data-translation="a" data-audio="audio/word_0dd00e33b6.mp3">um</span> <span class="word clickable" data-translation="smile" data-audio="audio/word_81348aeafa.mp3">sorriso</span> <span class="word clickable" data-translation="giant" data-audio="audio/word_61b1e7f4d2.mp3">gigante</span>. <span class="word clickable" data-translation="felt" data-audio="audio/word_9081ce1e34.mp3">Sentiu</span> <span class="word clickable" data-translation="that" data-audio="audio/word_8cfbcfcd27.mp3">que</span> <span class="word clickable" data-translation="had" data-audio="audio/word_845ccfd309.mp3">tinha</span> <span class="word clickable" data-translation="found" data-audio="audio/word_02fe732566.mp3">encontrado</span> <span class="word clickable" data-translation="a" data-audio="audio/word_0dd00e33b6.mp3">um</span> <span class="word clickable" data-translation="castle" data-audio="audio/word_76826f3aac.mp3">castelo</span> <span class="word clickable" data-translation="of" data-audio="audio/word_5f02f08893.mp3">de</span> <span class="word clickable" data-translation="treasure" data-audio="audio/word_8026f0be63.mp3">tesouro</span> <span class="word clickable" data-translation="magical" data-audio="audio/word_8b0a6e3199.mp3">mágico</span> <span class="word clickable" data-translation="in the" data-audio="audio/word_7fa3b767c4.mp3">no</span> <span class="word clickable" data-translation="sky" data-audio="audio/word_6efbd2a899.mp3">céu</span>. <span class="word clickable" data-translation="stayed" data-audio="audio/word_7b8dfaee10.mp3">Ficou</span> <span class="word clickable" data-translation="very" data-audio="audio/word_7478c6c42f.mp3">muito</span> <span class="word clickable" data-translation="happy" data-audio="audio/word_afe0b02b35.mp3">feliz</span> <span class="word clickable" data-translation="by" data-audio="audio/word_7cf41ff971.mp3">por</span> <span class="word clickable" data-translation="to share" data-audio="audio/word_909b61d3f9.mp3">partilhar</span> <span class="word clickable" data-translation="this" data-audio="audio/word_0c4e304279.mp3">este</span> <span class="word clickable" data-translation="place" data-audio="audio/word_744497f0c7.mp3">lugar</span> <span class="word clickable" data-translation="wonderful" data-audio="audio/word_f4f3f73943.mp3">maravilhoso</span> <span class="word clickable" data-translation="with" data-audio="audio/word_4d236d9a2d.mp3">com</span> <span class="word clickable" data-translation="the" data-audio="audio/word_d956797521.mp3">o</span> <span class="word clickable" data-translation="world" data-audio="audio/word_dd485e41f1.mp3">mundo</span> <span class="word clickable" data-translation="whole" data-audio="audio/word_8fa3f08ef6.mp3">inteiro</span>.</div>
+
+    <div class="fun-fact">
+      <div class="fun-fact-label">Sabia que&hellip;</div>
+      <div class="fun-fact-text">As lhamas fofinhas ainda vivem em Machu Picchu hoje em dia, funcionando como corta-relvas peludos para manter a relva verde bem curtinha!</div>
+    </div>
+  </div>
+
+  <!-- Click-away overlay -->
+  <div class="overlay" id="overlay"></div>
+
+  <!-- Bottom popup -->
+  <div class="popup" id="popup" role="dialog" aria-modal="true">
+    <div class="popup-card">
+      <div class="popup-info">
+        <div class="popup-word" id="popup-word"></div>
+        <div class="popup-translation" id="popup-translation"></div>
+      </div>
+      <button class="replay-btn" id="replay-btn" aria-label="Ouvir" disabled>
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05
+                   c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71
+                   s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <script>
+    const META = {"date": "2026-07-24", "date_formatted": "July 24, 2026", "topic_en": "Hiram Bingham finds the secret city of Machu Picchu on July 24, 1911", "topic_pt": "Hiram Bingham encontra a cidade secreta de Machu Picchu a 24 de julho de 1911", "title_pt": "O Hiram e a Cidade Mágica nas Nuvens", "story_en": "Once upon a time, a friendly explorer named Hiram went on a grand adventure. It was a warm July day in the beautiful country of Peru. Hiram wanted to find a secret city hidden high in the mountains. He packed his big backpack and started to walk. Step, step, step! Hiram climbed up, up, up into the fluffy white clouds. The air was cool and sweet. High on the mountain, he saw furry llamas grazing on the green grass. The cute llamas looked at him and wiggled their ears. Suddenly, the foggy mist cleared away. Hiram gasped with joy! Right in front of him was a beautiful city made of ancient gray stones. It was called Machu Picchu. It had stone houses, green yards, and tall steps to climb. This special city had been sleeping quietly for a very long time. Hiram smiled a giant smile. He felt like he had found a magical treasure castle in the sky. He was so happy to share this wonderful place with the world."};
+
+    // ---- State ----
+    let activeEl     = null;
+    let currentAudio = null;
+    let showingEN    = false;
+
+    // Cache the Portuguese HTML so we can restore it after toggling to EN
+    const PT_HTML = document.getElementById('story-body').innerHTML;
+
+    // ---- DOM refs ----
+    const popup      = document.getElementById('popup');
+    const overlay    = document.getElementById('overlay');
+    const popupWord  = document.getElementById('popup-word');
+    const popupTrans = document.getElementById('popup-translation');
+    const replayBtn  = document.getElementById('replay-btn');
+    const storyBody  = document.getElementById('story-body');
+    const headerTitle = document.getElementById('header-title');
+    const toggleBtn  = document.getElementById('toggle-lang');
+
+    // ---- Audio ----
+    function stopAudio() {
+      if (currentAudio) {
+        currentAudio.pause();
+        currentAudio.src = '';
+        currentAudio = null;
+        replayBtn.classList.remove('playing');
+      }
+    }
+
+    function playAudio(src) {
+      stopAudio();
+      const audio = new Audio(src);
+      currentAudio = audio;
+      replayBtn.classList.add('playing');
+      audio.play().catch(() => {});
+      audio.onended = () => { replayBtn.classList.remove('playing'); currentAudio = null; };
+      audio.onerror = () => { replayBtn.classList.remove('playing'); currentAudio = null; };
+    }
+
+    // ---- Popup ----
+    function showPopup(el) {
+      if (activeEl === el) { hidePopup(); return; }
+      if (activeEl) activeEl.classList.remove('active');
+      stopAudio();
+
+      activeEl = el;
+      el.classList.add('active');
+
+      popupWord.textContent  = el.textContent;
+      popupTrans.textContent = el.dataset.translation || '—';
+
+      const audioSrc = el.dataset.audio || '';
+      replayBtn.disabled = !audioSrc;
+      replayBtn.dataset.src = audioSrc;
+
+      popup.classList.add('visible');
+      overlay.classList.add('visible');
+      // No auto-play — user taps the speaker button to hear audio
+    }
+
+    function hidePopup() {
+      popup.classList.remove('visible');
+      overlay.classList.remove('visible');
+      if (activeEl) { activeEl.classList.remove('active'); activeEl = null; }
+      stopAudio();
+    }
+
+    // ---- EN/PT toggle ----
+    function toggleLanguage() {
+      hidePopup();
+      showingEN = !showingEN;
+      if (showingEN) {
+        storyBody.textContent = META.story_en;
+        toggleBtn.textContent = 'PT';
+        toggleBtn.classList.add('en-active');
+      } else {
+        storyBody.innerHTML = PT_HTML;
+        toggleBtn.textContent = 'EN';
+        toggleBtn.classList.remove('en-active');
+      }
+    }
+
+    // ---- Event listeners ----
+    function onWordTap(e) {
+      const el = e.target.closest('.word.clickable');
+      el ? showPopup(el) : hidePopup();
+    }
+
+    storyBody.addEventListener('click', onWordTap);
+    headerTitle.addEventListener('click', onWordTap);
+
+    overlay.addEventListener('click', hidePopup);
+
+    replayBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      const src = replayBtn.dataset.src;
+      if (src) playAudio(src);
+    });
+
+    toggleBtn.addEventListener('click', toggleLanguage);
+
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') hidePopup(); });
+  </script>
+</body>
+</html>
