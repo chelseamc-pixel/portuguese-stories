@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#f7f4ee">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>O Dia Especial da Massa do Leo</title>
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    :root {
+      --green: #2c5f2e;
+      --green-light: #e8f5e9;
+      --green-mid: #3d7a3f;
+      --bg: #f7f4ee;
+      --surface: #ffffff;
+      --text: #1c1c1e;
+      --text-muted: #6e6e73;
+      --popup-bg: #1c1c1e;
+      --popup-text: #f5f5f7;
+      --popup-sub: #aeaeb2;
+      --radius: 16px;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Georgia', 'Times New Roman', serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ---- Header ---- */
+    .header {
+      position: sticky;
+      top: 0;
+      z-index: 200;
+      background: var(--green);
+      color: #fff;
+      padding: 14px 20px 16px;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+    .header-main { flex: 1; min-width: 0; }
+    .header-eyebrow {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.6px;
+      text-transform: uppercase;
+      opacity: 0.75;
+    }
+    .header-title {
+      font-size: 19px;
+      font-weight: 700;
+      margin-top: 5px;
+      line-height: 1.3;
+    }
+
+    /* Clickable words inside the title (white text context) */
+    .header-title .word.clickable {
+      cursor: pointer;
+      border-radius: 4px;
+      padding: 1px 0;
+      transition: background 0.12s;
+    }
+    .header-title .word.clickable:active {
+      background: rgba(255,255,255,0.18);
+    }
+    .header-title .word.active {
+      background: rgba(255,255,255,0.22);
+    }
+
+    /* EN/PT toggle button */
+    .toggle-btn {
+      flex-shrink: 0;
+      background: transparent;
+      border: 1.5px solid rgba(255,255,255,0.55);
+      color: rgba(255,255,255,0.9);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      padding: 5px 11px;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+      margin-top: 2px;
+    }
+    .toggle-btn.en-active {
+      background: rgba(255,255,255,0.9);
+      color: var(--green);
+      border-color: transparent;
+    }
+
+    /* ---- Story ---- */
+    .story-wrap {
+      padding: 26px 22px 140px;
+      max-width: 640px;
+      margin: 0 auto;
+    }
+    .story-body {
+      font-size: 21px;
+      line-height: 1.9;
+      letter-spacing: 0.01em;
+      color: var(--text);
+    }
+
+    /* ---- Word spans ---- */
+    .word { display: inline; }
+    .word.clickable {
+      cursor: pointer;
+      border-radius: 4px;
+      padding: 1px 0;
+      transition: background 0.12s;
+    }
+    .word.clickable:active { background: rgba(44, 95, 46, 0.18); }
+    .word.active { background: rgba(44, 95, 46, 0.22); }
+
+    /* ---- Fun fact ---- */
+    .fun-fact {
+      margin-top: 32px;
+      background: var(--green-light);
+      border-left: 4px solid var(--green);
+      border-radius: 0 10px 10px 0;
+      padding: 14px 18px;
+    }
+    .fun-fact-label {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: var(--green);
+      margin-bottom: 6px;
+    }
+    .fun-fact-text {
+      font-size: 15px;
+      line-height: 1.65;
+      color: var(--text);
+    }
+
+    /* ---- Overlay ---- */
+    .overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 300;
+    }
+    .overlay.visible { display: block; }
+
+    /* ---- Popup card ---- */
+    .popup {
+      display: none;
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 400;
+      padding: 12px 16px max(24px, env(safe-area-inset-bottom));
+    }
+    .popup.visible { display: block; }
+
+    .popup-card {
+      background: var(--popup-bg);
+      border-radius: var(--radius);
+      padding: 18px 20px 20px;
+      max-width: 480px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      box-shadow: 0 12px 48px rgba(0,0,0,0.35);
+    }
+
+    .popup-info { flex: 1; min-width: 0; }
+    .popup-word {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--popup-text);
+      line-height: 1.2;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .popup-translation {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: 15px;
+      color: var(--popup-sub);
+      margin-top: 5px;
+    }
+
+    /* Speaker button */
+    .replay-btn {
+      flex-shrink: 0;
+      width: 46px;
+      height: 46px;
+      border-radius: 50%;
+      border: none;
+      background: var(--green);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s;
+    }
+    .replay-btn:active { transform: scale(0.92); }
+    .replay-btn:disabled { background: #3a3a3c; opacity: 0.5; cursor: default; }
+    .replay-btn.playing { background: var(--green-mid); }
+    .replay-btn svg { width: 22px; height: 22px; fill: white; }
+  </style>
+</head>
+<body>
+
+  <header class="header">
+    <div class="header-main">
+      <div class="header-eyebrow">October 17, 2026 &middot; National Pasta Day &middot; Lourenço</div>
+      <div class="header-title" id="header-title"><span class="word clickable" data-translation="the" data-audio="audio/word_d956797521.mp3">O</span> <span class="word clickable" data-translation="day" data-audio="audio/word_465b1f70b5.mp3">Dia</span> <span class="word">Especial</span> <span class="word clickable" data-translation="of the" data-audio="audio/word_5ca2aa845c.mp3">da</span> <span class="word clickable" data-translation="pasta" data-audio="audio/word_6cf444e98d.mp3">Massa</span> <span class="word clickable" data-translation="of the" data-audio="audio/word_d4579b2688.mp3">do</span> <span class="word clickable" data-translation="Leo" data-audio="audio/word_0f759dd1ea.mp3">Leo</span></div>
+    </div>
+    <button class="toggle-btn" id="toggle-lang" title="See in English" aria-label="Toggle language">EN</button>
+  </header>
+
+  <div class="story-wrap">
+    <div class="story-body" id="story-body"><span class="word clickable" data-translation="today" data-audio="audio/word_da53ac20be.mp3">Hoje</span> <span class="word clickable" data-translation="is" data-audio="audio/word_66ddcd97cf.mp3">é</span> <span class="word clickable" data-translation="day" data-audio="audio/word_465b1f70b5.mp3">dia</span> <span class="word clickable" data-translation="seventeen" data-audio="audio/word_123ef00aff.mp3">dezassete</span> <span class="word clickable" data-translation="of" data-audio="audio/word_5f02f08893.mp3">de</span> <span class="word clickable" data-translation="October" data-audio="audio/word_676eadb9db.mp3">outubro</span>, <span class="word clickable" data-translation="a" data-audio="audio/word_0dd00e33b6.mp3">um</span> <span class="word clickable" data-translation="day" data-audio="audio/word_465b1f70b5.mp3">dia</span> <span class="word clickable" data-translation="super" data-audio="audio/word_1b3231655c.mp3">super</span> <span class="word clickable" data-translation="delicious" data-audio="audio/word_d831b6a598.mp3">delicioso</span>! <span class="word clickable" data-translation="is" data-audio="audio/word_66ddcd97cf.mp3">É</span> <span class="word clickable" data-translation="the" data-audio="audio/word_d956797521.mp3">o</span> <span class="word clickable" data-translation="day" data-audio="audio/word_465b1f70b5.mp3">Dia</span> <span class="word clickable" data-translation="national" data-audio="audio/word_2cb395ce28.mp3">Nacional</span> <span class="word clickable" data-translation="of the" data-audio="audio/word_5ca2aa845c.mp3">da</span> <span class="word clickable" data-translation="pasta" data-audio="audio/word_6cf444e98d.mp3">Massa</span>. <span class="word clickable" data-translation="the" data-audio="audio/word_d956797521.mp3">O</span> <span class="word clickable" data-translation="Leo" data-audio="audio/word_0f759dd1ea.mp3">Leo</span> <span class="word clickable" data-translation="was" data-audio="audio/word_1df33d7ab3.mp3">estava</span> <span class="word clickable" data-translation="very" data-audio="audio/word_7478c6c42f.mp3">muito</span> <span class="word clickable" data-translation="excited" data-audio="audio/word_f1e17e505f.mp3">entusiasmado</span> <span class="word clickable" data-translation="for" data-audio="audio/word_d3afac6e06.mp3">para</span> <span class="word clickable" data-translation="to cook" data-audio="audio/word_90da917439.mp3">cozinhar</span>. <span class="word clickable" data-translation="he" data-audio="audio/word_7c4edbcefc.mp3">Ele</span> <span class="word clickable" data-translation="helped" data-audio="audio/word_fc5accce61.mp3">ajudou</span> <span class="word clickable" data-translation="the" data-audio="audio/word_d956797521.mp3">o</span> <span class="word clickable" data-translation="dad" data-audio="audio/word_d828a5b9b0.mp3">pai</span> <span class="word clickable" data-translation="in the" data-audio="audio/word_6ec66e124f.mp3">na</span> <span class="word clickable" data-translation="kitchen" data-audio="audio/word_82ee206b2a.mp3">cozinha</span> <span class="word clickable" data-translation="well" data-audio="audio/word_d3c654d99b.mp3">bem</span> <span class="word clickable" data-translation="lit up" data-audio="audio/word_6ea74c6efb.mp3">iluminada</span>. «<span class="word clickable" data-translation="that" data-audio="audio/word_8cfbcfcd27.mp3">Que</span> <span class="word clickable" data-translation="shape" data-audio="audio/word_7e51ca9201.mp3">formato</span> <span class="word clickable" data-translation="let's go" data-audio="audio/word_8c0e0bca12.mp3">vamos</span> <span class="word clickable" data-translation="to make" data-audio="audio/word_71bceaaf9b.mp3">fazer</span>?», <span class="word clickable" data-translation="asked" data-audio="audio/word_a280772bc4.mp3">perguntou</span> <span class="word clickable" data-translation="the" data-audio="audio/word_d956797521.mp3">o</span> <span class="word clickable" data-translation="dad" data-audio="audio/word_d828a5b9b0.mp3">pai</span>. <span class="word clickable" data-translation="the" data-audio="audio/word_d956797521.mp3">O</span> <span class="word clickable" data-translation="Leo" data-audio="audio/word_0f759dd1ea.mp3">Leo</span> <span class="word clickable" data-translation="looked" data-audio="audio/word_99d47ca5dc.mp3">olhou</span> <span class="word clickable" data-translation="for" data-audio="audio/word_d3afac6e06.mp3">para</span> <span class="word clickable" data-translation="inside" data-audio="audio/word_fd91e2069d.mp3">dentro</span> <span class="word clickable" data-translation="of the" data-audio="audio/word_d4579b2688.mp3">do</span> <span class="word clickable" data-translation="cupboard" data-audio="audio/word_3c5fa5982c.mp3">armário</span> <span class="word clickable" data-translation="big" data-audio="audio/word_7a3e1c7c45.mp3">grande</span>. <span class="word clickable" data-translation="saw" data-audio="audio/word_9d3a6c27f0.mp3">Viu</span> <span class="word clickable" data-translation="strands" data-audio="audio/word_f47d919ee3.mp3">fios</span> <span class="word clickable" data-translation="long" data-audio="audio/word_597f4a9abe.mp3">compridos</span> <span class="word clickable" data-translation="and" data-audio="audio/word_e1671797c5.mp3">e</span> <span class="word clickable" data-translation="playful" data-audio="audio/word_9a4c78fcb0.mp3">brincalhões</span> <span class="word clickable" data-translation="of" data-audio="audio/word_5f02f08893.mp3">de</span> <span class="word clickable" data-translation="spaghetti" data-audio="audio/word_76e09b851a.mp3">esparguete</span>. <span class="word clickable" data-translation="saw" data-audio="audio/word_9d3a6c27f0.mp3">Viu</span> <span class="word clickable" data-translation="little elbows" data-audio="audio/word_2d0bda6511.mp3">cotovelinhos</span> <span class="word clickable" data-translation="of" data-audio="audio/word_5f02f08893.mp3">de</span> <span class="word clickable" data-translation="pasta" data-audio="audio/word_6cf444e98d.mp3">massa</span> <span class="word clickable" data-translation="very" data-audio="audio/word_7478c6c42f.mp3">muito</span> <span class="word clickable" data-translation="tiny" data-audio="audio/word_860e549a8d.mp3">pequeninos</span>. <span class="word clickable" data-translation="until" data-audio="audio/word_fab1082de9.mp3">Até</span> <span class="word clickable" data-translation="saw" data-audio="audio/word_9d3a6c27f0.mp3">viu</span> <span class="word clickable" data-translation="little bows" data-audio="audio/word_674b8b87ba.mp3">lacinhos</span> <span class="word clickable" data-translation="of" data-audio="audio/word_5f02f08893.mp3">de</span> <span class="word clickable" data-translation="pasta" data-audio="audio/word_6cf444e98d.mp3">massa</span>! «<span class="word clickable" data-translation="let's go" data-audio="audio/word_8c0e0bca12.mp3">Vamos</span> <span class="word clickable" data-translation="to cook" data-audio="audio/word_90da917439.mp3">cozinhar</span> <span class="word clickable" data-translation="the" data-audio="audio/word_dd302f9468.mp3">os</span> <span class="word clickable" data-translation="little bows" data-audio="audio/word_674b8b87ba.mp3">lacinhos</span>!», <span class="word clickable" data-translation="celebrated" data-audio="audio/word_bffdd3ab35.mp3">festejou</span> <span class="word clickable" data-translation="the" data-audio="audio/word_d956797521.mp3">o</span> <span class="word clickable" data-translation="Leo" data-audio="audio/word_0f759dd1ea.mp3">Leo</span> <span class="word clickable" data-translation="with" data-audio="audio/word_4d236d9a2d.mp3">com</span> <span class="word clickable" data-translation="joy" data-audio="audio/word_f8f01ea0ac.mp3">alegria</span>. «<span class="word clickable" data-translation="look like" data-audio="audio/word_75037151a6.mp3">Parecem</span> <span class="word clickable" data-translation="butterflies" data-audio="audio/word_0b8a2f963d.mp3">borboletas</span> <span class="word clickable" data-translation="pretty" data-audio="audio/word_d5fca30d12.mp3">bonitas</span>.» <span class="word clickable" data-translation="the" data-audio="audio/word_d956797521.mp3">O</span> <span class="word clickable" data-translation="dad" data-audio="audio/word_d828a5b9b0.mp3">pai</span> <span class="word clickable" data-translation="put" data-audio="audio/word_6558aebcb6.mp3">pôs</span> <span class="word clickable" data-translation="the" data-audio="audio/word_dd302f9468.mp3">os</span> <span class="word clickable" data-translation="little bows" data-audio="audio/word_674b8b87ba.mp3">lacinhos</span> <span class="word clickable" data-translation="dry" data-audio="audio/word_4659507fa5.mp3">secos</span> <span class="word clickable" data-translation="in a" data-audio="audio/word_0dfb2d09ae.mp3">numa</span> <span class="word clickable" data-translation="pot" data-audio="audio/word_2d48f0e59e.mp3">panela</span> <span class="word clickable" data-translation="with" data-audio="audio/word_4d236d9a2d.mp3">com</span> <span class="word clickable" data-translation="water" data-audio="audio/word_5515404ffb.mp3">água</span> <span class="word clickable" data-translation="hot" data-audio="audio/word_45f6bd3e53.mp3">quente</span>. <span class="word clickable" data-translation="bloop" data-audio="audio/word_273678d405.mp3">Blup</span>, <span class="word clickable" data-translation="bloop" data-audio="audio/word_273678d405.mp3">blup</span>, <span class="word clickable" data-translation="bloop" data-audio="audio/word_273678d405.mp3">blup</span>! <span class="word clickable" data-translation="the" data-audio="audio/word_0cc175b9c0.mp3">A</span> <span class="word clickable" data-translation="pasta" data-audio="audio/word_6cf444e98d.mp3">massa</span> <span class="word clickable" data-translation="danced" data-audio="audio/word_58f2acc8fa.mp3">dançava</span> <span class="word clickable" data-translation="in the" data-audio="audio/word_6ec66e124f.mp3">na</span> <span class="word clickable" data-translation="water" data-audio="audio/word_5515404ffb.mp3">água</span> <span class="word clickable" data-translation="the" data-audio="audio/word_0cc175b9c0.mp3">a</span> <span class="word clickable" data-translation="to boil" data-audio="audio/word_ecc5389f59.mp3">ferver</span>. <span class="word clickable" data-translation="quickly" data-audio="audio/word_bb1dde2b8c.mp3">Depressa</span>, <span class="word clickable" data-translation="the" data-audio="audio/word_dd302f9468.mp3">os</span> <span class="word clickable" data-translation="little bows" data-audio="audio/word_674b8b87ba.mp3">lacinhos</span> <span class="word clickable" data-translation="became" data-audio="audio/word_b8b07ea305.mp3">ficaram</span> <span class="word clickable" data-translation="soft" data-audio="audio/word_8b1f0c9ce2.mp3">macios</span> <span class="word clickable" data-translation="and" data-audio="audio/word_e1671797c5.mp3">e</span> <span class="word clickable" data-translation="fluffy" data-audio="audio/word_d80691b352.mp3">fofinhos</span>. <span class="word clickable" data-translation="the" data-audio="audio/word_d956797521.mp3">O</span> <span class="word clickable" data-translation="dad" data-audio="audio/word_d828a5b9b0.mp3">pai</span> <span class="word clickable" data-translation="poured" data-audio="audio/word_6df523f4bb.mp3">deitou</span> <span class="word clickable" data-translation="a" data-audio="audio/word_0dd00e33b6.mp3">um</span> <span class="word clickable" data-translation="sauce" data-audio="audio/word_0a396c5670.mp3">molho</span> <span class="word clickable" data-translation="of" data-audio="audio/word_5f02f08893.mp3">de</span> <span class="word clickable" data-translation="cheese" data-audio="audio/word_c4d194cfc9.mp3">queijo</span> <span class="word clickable" data-translation="yellow" data-audio="audio/word_df132c5915.mp3">amarelo</span> <span class="word clickable" data-translation="and" data-audio="audio/word_e1671797c5.mp3">e</span> <span class="word clickable" data-translation="warm" data-audio="audio/word_a1be078d77.mp3">quentinho</span> <span class="word clickable" data-translation="for" data-audio="audio/word_7cf41ff971.mp3">por</span> <span class="word clickable" data-translation="top" data-audio="audio/word_e1f9687880.mp3">cima</span> <span class="word clickable" data-translation="of the" data-audio="audio/word_5ca2aa845c.mp3">da</span> <span class="word clickable" data-translation="pasta" data-audio="audio/word_6cf444e98d.mp3">massa</span>. <span class="word clickable" data-translation="the" data-audio="audio/word_d956797521.mp3">O</span> <span class="word clickable" data-translation="Leo" data-audio="audio/word_0f759dd1ea.mp3">Leo</span> <span class="word clickable" data-translation="used" data-audio="audio/word_0cd55a4b14.mp3">usou</span> <span class="word clickable" data-translation="a" data-audio="audio/word_18f8891c64.mp3">uma</span> <span class="word clickable" data-translation="spoon" data-audio="audio/word_e02d09e6c6.mp3">colher</span> <span class="word clickable" data-translation="big" data-audio="audio/word_7a3e1c7c45.mp3">grande</span> <span class="word clickable" data-translation="for" data-audio="audio/word_d3afac6e06.mp3">para</span> <span class="word clickable" data-translation="to stir" data-audio="audio/word_542a545d15.mp3">mexer</span> <span class="word clickable" data-translation="everything" data-audio="audio/word_99eeb26a99.mp3">tudo</span>. <span class="word clickable" data-translation="smelled" data-audio="audio/word_d0ad4914aa.mp3">Cheirava</span> <span class="word clickable" data-translation="so" data-audio="audio/word_0ff8c1e9f1.mp3">tão</span> <span class="word clickable" data-translation="well" data-audio="audio/word_d3c654d99b.mp3">bem</span>! <span class="word clickable" data-translation="the" data-audio="audio/word_d956797521.mp3">O</span> <span class="word clickable" data-translation="Leo" data-audio="audio/word_0f759dd1ea.mp3">Leo</span> <span class="word clickable" data-translation="sat down" data-audio="audio/word_075875ff3a.mp3">sentou</span>-<span class="word clickable" data-translation="itself" data-audio="audio/word_efad7abb32.mp3">se</span> <span class="word clickable" data-translation="to the" data-audio="audio/word_c9759ceb64.mp3">à</span> <span class="word clickable" data-translation="table" data-audio="audio/word_85770ae9de.mp3">mesa</span> <span class="word clickable" data-translation="and" data-audio="audio/word_e1671797c5.mp3">e</span> <span class="word clickable" data-translation="gave" data-audio="audio/word_375dcc1c4d.mp3">deu</span> <span class="word clickable" data-translation="a" data-audio="audio/word_18f8891c64.mp3">uma</span> <span class="word clickable" data-translation="big" data-audio="audio/word_7a3e1c7c45.mp3">grande</span> <span class="word clickable" data-translation="bite" data-audio="audio/word_6a8cf2e874.mp3">trincadela</span>. <span class="word clickable" data-translation="the" data-audio="audio/word_dd302f9468.mp3">Os</span> <span class="word clickable" data-translation="little bows" data-audio="audio/word_674b8b87ba.mp3">lacinhos</span> <span class="word clickable" data-translation="with" data-audio="audio/word_4d236d9a2d.mp3">com</span> <span class="word clickable" data-translation="cheese" data-audio="audio/word_c4d194cfc9.mp3">queijo</span> <span class="word clickable" data-translation="were" data-audio="audio/word_35d52de595.mp3">estavam</span> <span class="word clickable" data-translation="super" data-audio="audio/word_1b3231655c.mp3">super</span> <span class="word clickable" data-translation="soft" data-audio="audio/word_8b1f0c9ce2.mp3">macios</span> <span class="word clickable" data-translation="and" data-audio="audio/word_e1671797c5.mp3">e</span> <span class="word clickable" data-translation="delicious" data-audio="audio/word_a8af525e9a.mp3">deliciosos</span>. <span class="word clickable" data-translation="smiled" data-audio="audio/word_836001839d.mp3">Sorriu</span> <span class="word clickable" data-translation="with" data-audio="audio/word_4d236d9a2d.mp3">com</span> <span class="word clickable" data-translation="cheese" data-audio="audio/word_c4d194cfc9.mp3">queijo</span> <span class="word clickable" data-translation="yellow" data-audio="audio/word_df132c5915.mp3">amarelo</span> <span class="word clickable" data-translation="in the" data-audio="audio/word_7fa3b767c4.mp3">no</span> <span class="word clickable" data-translation="chin" data-audio="audio/word_48c114fd59.mp3">queixo</span>. «<span class="word clickable" data-translation="happy" data-audio="audio/word_afe0b02b35.mp3">Feliz</span> <span class="word clickable" data-translation="day" data-audio="audio/word_465b1f70b5.mp3">Dia</span> <span class="word clickable" data-translation="of the" data-audio="audio/word_5ca2aa845c.mp3">da</span> <span class="word clickable" data-translation="pasta" data-audio="audio/word_6cf444e98d.mp3">Massa</span>!», <span class="word clickable" data-translation="said" data-audio="audio/word_e52afc6520.mp3">disse</span> <span class="word clickable" data-translation="the" data-audio="audio/word_d956797521.mp3">o</span> <span class="word clickable" data-translation="Leo" data-audio="audio/word_0f759dd1ea.mp3">Leo</span>. <span class="word clickable" data-translation="the" data-audio="audio/word_d956797521.mp3">O</span> <span class="word clickable" data-translation="dad" data-audio="audio/word_d828a5b9b0.mp3">pai</span> <span class="word clickable" data-translation="smiled" data-audio="audio/word_836001839d.mp3">sorriu</span> <span class="word clickable" data-translation="and" data-audio="audio/word_e1671797c5.mp3">e</span> <span class="word clickable" data-translation="made" data-audio="audio/word_9c1f7ec202.mp3">fez</span>-<span class="word clickable" data-translation="him" data-audio="audio/word_03c5347be8.mp3">lhe</span> <span class="word clickable" data-translation="a" data-audio="audio/word_18f8891c64.mp3">uma</span> <span class="word clickable" data-translation="little pat" data-audio="audio/word_f1f5970231.mp3">festinha</span> <span class="word clickable" data-translation="in the" data-audio="audio/word_6ec66e124f.mp3">na</span> <span class="word clickable" data-translation="head" data-audio="audio/word_fae28a0c93.mp3">cabeça</span>. <span class="word clickable" data-translation="to eat" data-audio="audio/word_17cb48b129.mp3">Comer</span> <span class="word clickable" data-translation="pasta" data-audio="audio/word_6cf444e98d.mp3">massa</span> <span class="word clickable" data-translation="together" data-audio="audio/word_2ccdcb0338.mp3">juntos</span> <span class="word clickable" data-translation="went" data-audio="audio/word_28e8558387.mp3">foi</span> <span class="word clickable" data-translation="the" data-audio="audio/word_0cc175b9c0.mp3">a</span> <span class="word clickable" data-translation="best" data-audio="audio/word_1a8e1e8079.mp3">melhor</span> <span class="word clickable" data-translation="part" data-audio="audio/word_4d2aa37ecd.mp3">parte</span> <span class="word clickable" data-translation="of the" data-audio="audio/word_d4579b2688.mp3">do</span> <span class="word clickable" data-translation="day" data-audio="audio/word_465b1f70b5.mp3">dia</span>.</div>
+
+    <div class="fun-fact">
+      <div class="fun-fact-label">Sabia que&hellip;</div>
+      <div class="fun-fact-text">Sabias que existem mais de 350 formatos diferentes de massa no mundo, incluindo estrelas, rodas e lacinhos?</div>
+    </div>
+  </div>
+
+  <!-- Click-away overlay -->
+  <div class="overlay" id="overlay"></div>
+
+  <!-- Bottom popup -->
+  <div class="popup" id="popup" role="dialog" aria-modal="true">
+    <div class="popup-card">
+      <div class="popup-info">
+        <div class="popup-word" id="popup-word"></div>
+        <div class="popup-translation" id="popup-translation"></div>
+      </div>
+      <button class="replay-btn" id="replay-btn" aria-label="Ouvir" disabled>
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05
+                   c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71
+                   s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <script>
+    const META = {"date": "2026-10-17", "date_formatted": "October 17, 2026", "topic_en": "National Pasta Day", "topic_pt": "Dia Nacional da Massa", "title_pt": "O Dia Especial da Massa do Leo", "story_en": "Today is October seventeenth, a super yummy day! It is National Pasta Day. Leo was very excited to cook. He helped Dad in the bright kitchen. \"What shape should we make?\" asked Dad. Leo looked in the big cupboard. He saw long, wiggly spaghetti noodles. He saw tiny macaroni elbows. He even saw little pasta bowties! \"Let us cook the bowties!\" Leo cheered happily. \"They look like pretty butterflies.\" Dad put the dry bowties into a pot of warm water. Bloop, bloop, bloop! The noodles danced in the bubbling water. Soon, they became soft and bouncy. Dad poured warm yellow cheese sauce all over the pasta. Leo used a big spoon to stir it around. It smelled so good! Leo sat at the table and took a big bite. The cheesy bowties were super soft and delicious. He smiled with yellow cheese on his chin. \"Happy Pasta Day!\" said Leo. Dad smiled and patted his head. Eating pasta together was the best part of the day."};
+
+    // ---- State ----
+    let activeEl     = null;
+    let currentAudio = null;
+    let showingEN    = false;
+
+    // Cache the Portuguese HTML so we can restore it after toggling to EN
+    const PT_HTML = document.getElementById('story-body').innerHTML;
+
+    // ---- DOM refs ----
+    const popup      = document.getElementById('popup');
+    const overlay    = document.getElementById('overlay');
+    const popupWord  = document.getElementById('popup-word');
+    const popupTrans = document.getElementById('popup-translation');
+    const replayBtn  = document.getElementById('replay-btn');
+    const storyBody  = document.getElementById('story-body');
+    const headerTitle = document.getElementById('header-title');
+    const toggleBtn  = document.getElementById('toggle-lang');
+
+    // ---- Audio ----
+    function stopAudio() {
+      if (currentAudio) {
+        currentAudio.pause();
+        currentAudio.src = '';
+        currentAudio = null;
+        replayBtn.classList.remove('playing');
+      }
+    }
+
+    function playAudio(src) {
+      stopAudio();
+      const audio = new Audio(src);
+      currentAudio = audio;
+      replayBtn.classList.add('playing');
+      audio.play().catch(() => {});
+      audio.onended = () => { replayBtn.classList.remove('playing'); currentAudio = null; };
+      audio.onerror = () => { replayBtn.classList.remove('playing'); currentAudio = null; };
+    }
+
+    // ---- Popup ----
+    function showPopup(el) {
+      if (activeEl === el) { hidePopup(); return; }
+      if (activeEl) activeEl.classList.remove('active');
+      stopAudio();
+
+      activeEl = el;
+      el.classList.add('active');
+
+      popupWord.textContent  = el.textContent;
+      popupTrans.textContent = el.dataset.translation || '—';
+
+      const audioSrc = el.dataset.audio || '';
+      replayBtn.disabled = !audioSrc;
+      replayBtn.dataset.src = audioSrc;
+
+      popup.classList.add('visible');
+      overlay.classList.add('visible');
+      // No auto-play — user taps the speaker button to hear audio
+    }
+
+    function hidePopup() {
+      popup.classList.remove('visible');
+      overlay.classList.remove('visible');
+      if (activeEl) { activeEl.classList.remove('active'); activeEl = null; }
+      stopAudio();
+    }
+
+    // ---- EN/PT toggle ----
+    function toggleLanguage() {
+      hidePopup();
+      showingEN = !showingEN;
+      if (showingEN) {
+        storyBody.textContent = META.story_en;
+        toggleBtn.textContent = 'PT';
+        toggleBtn.classList.add('en-active');
+      } else {
+        storyBody.innerHTML = PT_HTML;
+        toggleBtn.textContent = 'EN';
+        toggleBtn.classList.remove('en-active');
+      }
+    }
+
+    // ---- Event listeners ----
+    function onWordTap(e) {
+      const el = e.target.closest('.word.clickable');
+      el ? showPopup(el) : hidePopup();
+    }
+
+    storyBody.addEventListener('click', onWordTap);
+    headerTitle.addEventListener('click', onWordTap);
+
+    overlay.addEventListener('click', hidePopup);
+
+    replayBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      const src = replayBtn.dataset.src;
+      if (src) playAudio(src);
+    });
+
+    toggleBtn.addEventListener('click', toggleLanguage);
+
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') hidePopup(); });
+  </script>
+</body>
+</html>
