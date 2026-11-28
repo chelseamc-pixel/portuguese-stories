@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#f7f4ee">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>O Capitão Magalhães e o Oceano Pacífico</title>
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    :root {
+      --green: #2c5f2e;
+      --green-light: #e8f5e9;
+      --green-mid: #3d7a3f;
+      --bg: #f7f4ee;
+      --surface: #ffffff;
+      --text: #1c1c1e;
+      --text-muted: #6e6e73;
+      --popup-bg: #1c1c1e;
+      --popup-text: #f5f5f7;
+      --popup-sub: #aeaeb2;
+      --radius: 16px;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Georgia', 'Times New Roman', serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ---- Header ---- */
+    .header {
+      position: sticky;
+      top: 0;
+      z-index: 200;
+      background: var(--green);
+      color: #fff;
+      padding: 14px 20px 16px;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+    .header-main { flex: 1; min-width: 0; }
+    .header-eyebrow {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.6px;
+      text-transform: uppercase;
+      opacity: 0.75;
+    }
+    .header-title {
+      font-size: 19px;
+      font-weight: 700;
+      margin-top: 5px;
+      line-height: 1.3;
+    }
+
+    /* Clickable words inside the title (white text context) */
+    .header-title .word.clickable {
+      cursor: pointer;
+      border-radius: 4px;
+      padding: 1px 0;
+      transition: background 0.12s;
+    }
+    .header-title .word.clickable:active {
+      background: rgba(255,255,255,0.18);
+    }
+    .header-title .word.active {
+      background: rgba(255,255,255,0.22);
+    }
+
+    /* EN/PT toggle button */
+    .toggle-btn {
+      flex-shrink: 0;
+      background: transparent;
+      border: 1.5px solid rgba(255,255,255,0.55);
+      color: rgba(255,255,255,0.9);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      padding: 5px 11px;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+      margin-top: 2px;
+    }
+    .toggle-btn.en-active {
+      background: rgba(255,255,255,0.9);
+      color: var(--green);
+      border-color: transparent;
+    }
+
+    /* ---- Story ---- */
+    .story-wrap {
+      padding: 26px 22px 140px;
+      max-width: 640px;
+      margin: 0 auto;
+    }
+    .story-body {
+      font-size: 21px;
+      line-height: 1.9;
+      letter-spacing: 0.01em;
+      color: var(--text);
+    }
+
+    /* ---- Word spans ---- */
+    .word { display: inline; }
+    .word.clickable {
+      cursor: pointer;
+      border-radius: 4px;
+      padding: 1px 0;
+      transition: background 0.12s;
+    }
+    .word.clickable:active { background: rgba(44, 95, 46, 0.18); }
+    .word.active { background: rgba(44, 95, 46, 0.22); }
+
+    /* ---- Fun fact ---- */
+    .fun-fact {
+      margin-top: 32px;
+      background: var(--green-light);
+      border-left: 4px solid var(--green);
+      border-radius: 0 10px 10px 0;
+      padding: 14px 18px;
+    }
+    .fun-fact-label {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: var(--green);
+      margin-bottom: 6px;
+    }
+    .fun-fact-text {
+      font-size: 15px;
+      line-height: 1.65;
+      color: var(--text);
+    }
+
+    /* ---- Overlay ---- */
+    .overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 300;
+    }
+    .overlay.visible { display: block; }
+
+    /* ---- Popup card ---- */
+    .popup {
+      display: none;
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 400;
+      padding: 12px 16px max(24px, env(safe-area-inset-bottom));
+    }
+    .popup.visible { display: block; }
+
+    .popup-card {
+      background: var(--popup-bg);
+      border-radius: var(--radius);
+      padding: 18px 20px 20px;
+      max-width: 480px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      box-shadow: 0 12px 48px rgba(0,0,0,0.35);
+    }
+
+    .popup-info { flex: 1; min-width: 0; }
+    .popup-word {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--popup-text);
+      line-height: 1.2;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .popup-translation {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: 15px;
+      color: var(--popup-sub);
+      margin-top: 5px;
+    }
+
+    /* Speaker button */
+    .replay-btn {
+      flex-shrink: 0;
+      width: 46px;
+      height: 46px;
+      border-radius: 50%;
+      border: none;
+      background: var(--green);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s;
+    }
+    .replay-btn:active { transform: scale(0.92); }
+    .replay-btn:disabled { background: #3a3a3c; opacity: 0.5; cursor: default; }
+    .replay-btn.playing { background: var(--green-mid); }
+    .replay-btn svg { width: 22px; height: 22px; fill: white; }
+  </style>
+</head>
+<body>
+
+  <header class="header">
+    <div class="header-main">
+      <div class="header-eyebrow">November 28, 2026 &middot; Ferdinand Magellan names the Pacific Ocean in 1520 &middot; Marta</div>
+      <div class="header-title" id="header-title"><span class="word clickable" data-translation="the" data-audio="audio/word_d956797521.mp3">O</span> <span class="word clickable" data-translation="captain" data-audio="audio/word_e41a65b817.mp3">Capitão</span> <span class="word clickable" data-translation="Magellan" data-audio="audio/word_87c5bc1699.mp3">Magalhães</span> <span class="word clickable" data-translation="and" data-audio="audio/word_e1671797c5.mp3">e</span> <span class="word clickable" data-translation="the" data-audio="audio/word_d956797521.mp3">o</span> <span class="word clickable" data-translation="ocean" data-audio="audio/word_e3de2cf8ac.mp3">Oceano</span> <span class="word clickable" data-translation="peaceful" data-audio="audio/word_df46118378.mp3">Pacífico</span></div>
+    </div>
+    <button class="toggle-btn" id="toggle-lang" title="See in English" aria-label="Toggle language">EN</button>
+  </header>
+
+  <div class="story-wrap">
+    <div class="story-body" id="story-body"><span class="word clickable" data-translation="there is" data-audio="audio/word_b4ae71aeb4.mp3">Há</span> <span class="word clickable" data-translation="very" data-audio="audio/word_7478c6c42f.mp3">muito</span>, <span class="word clickable" data-translation="very" data-audio="audio/word_7478c6c42f.mp3">muito</span> <span class="word clickable" data-translation="time" data-audio="audio/word_e34c64a052.mp3">tempo</span>, <span class="word clickable" data-translation="a" data-audio="audio/word_0dd00e33b6.mp3">um</span> <span class="word clickable" data-translation="captain" data-audio="audio/word_e41a65b817.mp3">capitão</span> <span class="word clickable" data-translation="brave" data-audio="audio/word_5394a47f4d.mp3">corajoso</span> <span class="word clickable" data-translation="called" data-audio="audio/word_754aef25db.mp3">chamado</span> <span class="word clickable" data-translation="Magellan" data-audio="audio/word_87c5bc1699.mp3">Magalhães</span> <span class="word clickable" data-translation="made" data-audio="audio/word_9c1f7ec202.mp3">fez</span> <span class="word clickable" data-translation="a" data-audio="audio/word_18f8891c64.mp3">uma</span> <span class="word clickable" data-translation="big" data-audio="audio/word_7a3e1c7c45.mp3">grande</span> <span class="word clickable" data-translation="trip" data-audio="audio/word_1f75679c63.mp3">viagem</span> <span class="word clickable" data-translation="of" data-audio="audio/word_5f02f08893.mp3">de</span> <span class="word clickable" data-translation="boat" data-audio="audio/word_78ae959170.mp3">barco</span>. <span class="word clickable" data-translation="he" data-audio="audio/word_7c4edbcefc.mp3">Ele</span> <span class="word clickable" data-translation="had" data-audio="audio/word_845ccfd309.mp3">tinha</span> <span class="word clickable" data-translation="a" data-audio="audio/word_0dd00e33b6.mp3">um</span> <span class="word clickable" data-translation="ship" data-audio="audio/word_2d5fe822f4.mp3">navio</span> <span class="word clickable" data-translation="giant" data-audio="audio/word_61b1e7f4d2.mp3">gigante</span> <span class="word clickable" data-translation="of" data-audio="audio/word_5f02f08893.mp3">de</span> <span class="word clickable" data-translation="wood" data-audio="audio/word_d471f65a3e.mp3">madeira</span> <span class="word clickable" data-translation="with" data-audio="audio/word_4d236d9a2d.mp3">com</span> <span class="word clickable" data-translation="big" data-audio="audio/word_d0948e2848.mp3">grandes</span> <span class="word clickable" data-translation="sails" data-audio="audio/word_6c6e3fa03a.mp3">velas</span> <span class="word clickable" data-translation="white" data-audio="audio/word_3f5ef335cf.mp3">brancas</span>. <span class="word clickable" data-translation="the" data-audio="audio/word_d956797521.mp3">O</span> <span class="word clickable" data-translation="Magellan" data-audio="audio/word_87c5bc1699.mp3">Magalhães</span> <span class="word clickable" data-translation="and" data-audio="audio/word_e1671797c5.mp3">e</span> <span class="word clickable" data-translation="the" data-audio="audio/word_0cc175b9c0.mp3">a</span> <span class="word clickable" data-translation="her" data-audio="audio/word_370e807f0d.mp3">sua</span> <span class="word clickable" data-translation="crew" data-audio="audio/word_2c96435c68.mp3">tripulação</span> <span class="word clickable" data-translation="wanted" data-audio="audio/word_8881bb1194.mp3">queriam</span> <span class="word clickable" data-translation="to discover" data-audio="audio/word_5aa0903382.mp3">descobrir</span> <span class="word clickable" data-translation="places" data-audio="audio/word_c7f2128dad.mp3">lugares</span> <span class="word clickable" data-translation="new" data-audio="audio/word_050a253aa8.mp3">novos</span> <span class="word clickable" data-translation="by" data-audio="audio/word_7cf41ff971.mp3">por</span> <span class="word clickable" data-translation="all" data-audio="audio/word_ea5cb8ff0a.mp3">todo</span> <span class="word clickable" data-translation="the" data-audio="audio/word_d956797521.mp3">o</span> <span class="word clickable" data-translation="world" data-audio="audio/word_dd485e41f1.mp3">mundo</span>. <span class="word clickable" data-translation="during" data-audio="audio/word_a086451de7.mp3">Durante</span> <span class="word clickable" data-translation="many" data-audio="audio/word_d69d0df789.mp3">muitos</span> <span class="word clickable" data-translation="days" data-audio="audio/word_d36a36c25f.mp3">dias</span>, <span class="word clickable" data-translation="the" data-audio="audio/word_d956797521.mp3">o</span> <span class="word clickable" data-translation="ship" data-audio="audio/word_2d5fe822f4.mp3">navio</span> <span class="word clickable" data-translation="jumped" data-audio="audio/word_725108645f.mp3">saltou</span> <span class="word clickable" data-translation="in" data-audio="audio/word_47e2e8c3fd.mp3">em</span> <span class="word clickable" data-translation="waves" data-audio="audio/word_098d751bc5.mp3">ondas</span> <span class="word clickable" data-translation="big" data-audio="audio/word_d0948e2848.mp3">grandes</span> <span class="word clickable" data-translation="and" data-audio="audio/word_e1671797c5.mp3">e</span> <span class="word clickable" data-translation="stormy" data-audio="audio/word_40ee699e5d.mp3">tempestuosas</span>. <span class="word clickable" data-translation="splash" data-audio="audio/word_76dae34905.mp3">Chape</span>! <span class="word clickable" data-translation="whoosh" data-audio="audio/word_f9fc0ba7be.mp3">Fuuu</span>! <span class="word clickable" data-translation="the" data-audio="audio/word_d956797521.mp3">O</span> <span class="word clickable" data-translation="wind" data-audio="audio/word_ae6b0a636d.mp3">vento</span> <span class="word clickable" data-translation="blew" data-audio="audio/word_823f0a3fe8.mp3">soprava</span> <span class="word clickable" data-translation="with" data-audio="audio/word_4d236d9a2d.mp3">com</span> <span class="word clickable" data-translation="strength" data-audio="audio/word_c479a8f54b.mp3">força</span> <span class="word clickable" data-translation="and" data-audio="audio/word_e1671797c5.mp3">e</span> <span class="word clickable" data-translation="the" data-audio="audio/word_0cc175b9c0.mp3">a</span> <span class="word clickable" data-translation="water" data-audio="audio/word_5515404ffb.mp3">água</span> <span class="word clickable" data-translation="blue" data-audio="audio/word_3b24fa7e14.mp3">azul</span> <span class="word clickable" data-translation="was" data-audio="audio/word_1df33d7ab3.mp3">estava</span> <span class="word clickable" data-translation="very" data-audio="audio/word_7478c6c42f.mp3">muito</span> <span class="word clickable" data-translation="wavy" data-audio="audio/word_8191796d69.mp3">agitada</span>. <span class="word clickable" data-translation="the" data-audio="audio/word_dd302f9468.mp3">Os</span> <span class="word clickable" data-translation="sailors" data-audio="audio/word_7b9964cdc1.mp3">marinheiros</span> <span class="word clickable" data-translation="friendly" data-audio="audio/word_32b35b89ee.mp3">simpáticos</span> <span class="word clickable" data-translation="grabbed" data-audio="audio/word_3d8e0ef56a.mp3">agarraram</span>-<span class="word clickable" data-translation="themselves" data-audio="audio/word_efad7abb32.mp3">se</span> <span class="word clickable" data-translation="well" data-audio="audio/word_d3c654d99b.mp3">bem</span>. <span class="word clickable" data-translation="after" data-audio="audio/word_a17522d931.mp3">Depois</span>, <span class="word clickable" data-translation="in a" data-audio="audio/word_0dfb2d09ae.mp3">numa</span> <span class="word clickable" data-translation="morning" data-audio="audio/word_969d64f450.mp3">manhã</span> <span class="word clickable" data-translation="of" data-audio="audio/word_5f02f08893.mp3">de</span> <span class="word clickable" data-translation="sun" data-audio="audio/word_12313a3d28.mp3">sol</span>, <span class="word clickable" data-translation="the" data-audio="audio/word_d956797521.mp3">o</span> <span class="word clickable" data-translation="ship" data-audio="audio/word_2d5fe822f4.mp3">navio</span> <span class="word clickable" data-translation="went in" data-audio="audio/word_c857e45e80.mp3">entrou</span> <span class="word clickable" data-translation="in a" data-audio="audio/word_0fc3cfbc27.mp3">num</span> <span class="word clickable" data-translation="new" data-audio="audio/word_42323e3211.mp3">novo</span> <span class="word clickable" data-translation="ocean" data-audio="audio/word_e3de2cf8ac.mp3">oceano</span>. <span class="word clickable" data-translation="of" data-audio="audio/word_5f02f08893.mp3">De</span> <span class="word clickable" data-translation="sudden" data-audio="audio/word_add88028d2.mp3">repente</span>, <span class="word clickable" data-translation="the" data-audio="audio/word_f970e2767d.mp3">as</span> <span class="word clickable" data-translation="waves" data-audio="audio/word_098d751bc5.mp3">ondas</span> <span class="word clickable" data-translation="big" data-audio="audio/word_d0948e2848.mp3">grandes</span> <span class="word clickable" data-translation="stopped" data-audio="audio/word_84e648e878.mp3">pararam</span>! <span class="word clickable" data-translation="the" data-audio="audio/word_0cc175b9c0.mp3">A</span> <span class="word clickable" data-translation="water" data-audio="audio/word_5515404ffb.mp3">água</span> <span class="word clickable" data-translation="became" data-audio="audio/word_7b8dfaee10.mp3">ficou</span> <span class="word clickable" data-translation="very" data-audio="audio/word_7478c6c42f.mp3">muito</span> <span class="word clickable" data-translation="calm" data-audio="audio/word_9583efc731.mp3">calma</span>. <span class="word clickable" data-translation="looked like" data-audio="audio/word_855049e912.mp3">Parecia</span> <span class="word clickable" data-translation="a" data-audio="audio/word_0dd00e33b6.mp3">um</span> <span class="word clickable" data-translation="mirror" data-audio="audio/word_a73e6aae1e.mp3">espelho</span> <span class="word clickable" data-translation="soft" data-audio="audio/word_9c49efce4e.mp3">suave</span> <span class="word clickable" data-translation="and" data-audio="audio/word_e1671797c5.mp3">e</span> <span class="word clickable" data-translation="smooth" data-audio="audio/word_cf21b535ee.mp3">liso</span> <span class="word clickable" data-translation="under" data-audio="audio/word_0430fdea1b.mp3">debaixo</span> <span class="word clickable" data-translation="of the" data-audio="audio/word_d4579b2688.mp3">do</span> <span class="word clickable" data-translation="sun" data-audio="audio/word_12313a3d28.mp3">sol</span> <span class="word clickable" data-translation="shiny" data-audio="audio/word_ea118d9bc5.mp3">brilhante</span>. <span class="word clickable" data-translation="dolphins" data-audio="audio/word_083c7c8e1b.mp3">Golfinhos</span> <span class="word clickable" data-translation="fluffy" data-audio="audio/word_d80691b352.mp3">fofinhos</span> <span class="word clickable" data-translation="swam" data-audio="audio/word_a3ce3fcd55.mp3">nadavam</span> <span class="word clickable" data-translation="to the" data-audio="audio/word_adac5e63f8.mp3">ao</span> <span class="word clickable" data-translation="side" data-audio="audio/word_21b12a2e1f.mp3">lado</span> <span class="word clickable" data-translation="of the" data-audio="audio/word_d4579b2688.mp3">do</span> <span class="word clickable" data-translation="ship" data-audio="audio/word_2d5fe822f4.mp3">navio</span>, <span class="word clickable" data-translation="the" data-audio="audio/word_0cc175b9c0.mp3">a</span> <span class="word clickable" data-translation="to jump" data-audio="audio/word_8a6297786b.mp3">saltar</span> <span class="word clickable" data-translation="for" data-audio="audio/word_d3afac6e06.mp3">para</span> <span class="word clickable" data-translation="top" data-audio="audio/word_e1f9687880.mp3">cima</span> <span class="word clickable" data-translation="and" data-audio="audio/word_e1671797c5.mp3">e</span> <span class="word clickable" data-translation="for" data-audio="audio/word_d3afac6e06.mp3">para</span> <span class="word clickable" data-translation="low" data-audio="audio/word_70664f34d1.mp3">baixo</span>. <span class="word clickable" data-translation="the" data-audio="audio/word_d956797521.mp3">O</span> <span class="word clickable" data-translation="captain" data-audio="audio/word_e41a65b817.mp3">capitão</span> <span class="word clickable" data-translation="Magellan" data-audio="audio/word_87c5bc1699.mp3">Magalhães</span> <span class="word clickable" data-translation="gave" data-audio="audio/word_375dcc1c4d.mp3">deu</span> <span class="word clickable" data-translation="a" data-audio="audio/word_0dd00e33b6.mp3">um</span> <span class="word clickable" data-translation="smile" data-audio="audio/word_81348aeafa.mp3">sorriso</span> <span class="word clickable" data-translation="happy" data-audio="audio/word_afe0b02b35.mp3">feliz</span>. «<span class="word clickable" data-translation="look" data-audio="audio/word_03fd1fa1bf.mp3">Olhem</span> <span class="word clickable" data-translation="like" data-audio="audio/word_ba5c7624c6.mp3">como</span> <span class="word clickable" data-translation="this" data-audio="audio/word_12ad8f0c5c.mp3">esta</span> <span class="word clickable" data-translation="water" data-audio="audio/word_5515404ffb.mp3">água</span> <span class="word clickable" data-translation="is" data-audio="audio/word_66ddcd97cf.mp3">é</span> <span class="word clickable" data-translation="so" data-audio="audio/word_0ff8c1e9f1.mp3">tão</span> <span class="word clickable" data-translation="calm" data-audio="audio/word_9583efc731.mp3">calma</span> <span class="word clickable" data-translation="and" data-audio="audio/word_e1671797c5.mp3">e</span> <span class="word clickable" data-translation="calm" data-audio="audio/word_aed43dddaa.mp3">tranquila</span>!», <span class="word clickable" data-translation="said" data-audio="audio/word_e52afc6520.mp3">disse</span> <span class="word clickable" data-translation="he" data-audio="audio/word_7c4edbcefc.mp3">ele</span>. <span class="word clickable" data-translation="like" data-audio="audio/word_ba5c7624c6.mp3">Como</span> <span class="word clickable" data-translation="the" data-audio="audio/word_0cc175b9c0.mp3">a</span> <span class="word clickable" data-translation="water" data-audio="audio/word_5515404ffb.mp3">água</span> <span class="word clickable" data-translation="was" data-audio="audio/word_cf5c0a6a33.mp3">era</span> <span class="word clickable" data-translation="so" data-audio="audio/word_0ff8c1e9f1.mp3">tão</span> <span class="word clickable" data-translation="gentle" data-audio="audio/word_fa070b83ef.mp3">mansinha</span>, <span class="word clickable" data-translation="the" data-audio="audio/word_d956797521.mp3">o</span> <span class="word clickable" data-translation="Magellan" data-audio="audio/word_87c5bc1699.mp3">Magalhães</span> <span class="word clickable" data-translation="gave" data-audio="audio/word_375dcc1c4d.mp3">deu</span> <span class="word clickable" data-translation="the" data-audio="audio/word_0cc175b9c0.mp3">a</span> <span class="word clickable" data-translation="this" data-audio="audio/word_0c4e304279.mp3">este</span> <span class="word clickable" data-translation="ocean" data-audio="audio/word_e3de2cf8ac.mp3">oceano</span> <span class="word clickable" data-translation="a" data-audio="audio/word_0dd00e33b6.mp3">um</span> <span class="word clickable" data-translation="name" data-audio="audio/word_666ac576aa.mp3">nome</span> <span class="word clickable" data-translation="special" data-audio="audio/word_4c4c0d4e49.mp3">especial</span>. <span class="word clickable" data-translation="called" data-audio="audio/word_e0322aab76.mp3">Chamou</span>-<span class="word clickable" data-translation="to him" data-audio="audio/word_03c5347be8.mp3">lhe</span> <span class="word clickable" data-translation="ocean" data-audio="audio/word_e3de2cf8ac.mp3">Oceano</span> <span class="word clickable" data-translation="peaceful" data-audio="audio/word_df46118378.mp3">Pacífico</span>. <span class="word clickable" data-translation="the" data-audio="audio/word_0cc175b9c0.mp3">A</span> <span class="word clickable" data-translation="word" data-audio="audio/word_3900cf077a.mp3">palavra</span> «<span class="word clickable" data-translation="peaceful" data-audio="audio/word_df46118378.mp3">Pacífico</span>» <span class="word clickable" data-translation="means" data-audio="audio/word_4d391f5bb8.mp3">significa</span> <span class="word clickable" data-translation="calm" data-audio="audio/word_a3ff9b6509.mp3">tranquilo</span>. <span class="word clickable" data-translation="the" data-audio="audio/word_d956797521.mp3">O</span> <span class="word clickable" data-translation="Magellan" data-audio="audio/word_87c5bc1699.mp3">Magalhães</span> <span class="word clickable" data-translation="and" data-audio="audio/word_e1671797c5.mp3">e</span> <span class="word clickable" data-translation="the" data-audio="audio/word_dd302f9468.mp3">os</span> <span class="word clickable" data-translation="their" data-audio="audio/word_36db7c1952.mp3">seus</span> <span class="word clickable" data-translation="friends" data-audio="audio/word_c2b592488a.mp3">amigos</span> <span class="word clickable" data-translation="felt" data-audio="audio/word_15cc04e2e2.mp3">sentiram</span>-<span class="word clickable" data-translation="themselves" data-audio="audio/word_efad7abb32.mp3">se</span> <span class="word clickable" data-translation="safe" data-audio="audio/word_1d96d68448.mp3">seguros</span> <span class="word clickable" data-translation="and" data-audio="audio/word_e1671797c5.mp3">e</span> <span class="word clickable" data-translation="happy" data-audio="audio/word_ea61e07aae.mp3">felizes</span>. <span class="word clickable" data-translation="sailed" data-audio="audio/word_201c299b33.mp3">Navegaram</span> <span class="word clickable" data-translation="gently" data-audio="audio/word_3a8d37d499.mp3">suavemente</span> <span class="word clickable" data-translation="by the" data-audio="audio/word_93a5938047.mp3">pela</span> <span class="word clickable" data-translation="water" data-audio="audio/word_5515404ffb.mp3">água</span> <span class="word clickable" data-translation="calm" data-audio="audio/word_9583efc731.mp3">calma</span>, <span class="word clickable" data-translation="the" data-audio="audio/word_0cc175b9c0.mp3">a</span> <span class="word clickable" data-translation="to look" data-audio="audio/word_37882c7ca5.mp3">olhar</span> <span class="word clickable" data-translation="for" data-audio="audio/word_d3afac6e06.mp3">para</span> <span class="word clickable" data-translation="the" data-audio="audio/word_f970e2767d.mp3">as</span> <span class="word clickable" data-translation="stars" data-audio="audio/word_b53c520576.mp3">estrelas</span> <span class="word clickable" data-translation="shiny" data-audio="audio/word_7a029266c5.mp3">brilhantes</span> <span class="word clickable" data-translation="to the" data-audio="audio/word_c9759ceb64.mp3">à</span> <span class="word clickable" data-translation="night" data-audio="audio/word_84736276c2.mp3">noite</span>.</div>
+
+    <div class="fun-fact">
+      <div class="fun-fact-label">Sabia que&hellip;</div>
+      <div class="fun-fact-text">O Oceano Pacífico é o maior oceano da Terra, e é tão gigante que guarda mais de metade de toda a água dos oceanos do nosso planeta!</div>
+    </div>
+  </div>
+
+  <!-- Click-away overlay -->
+  <div class="overlay" id="overlay"></div>
+
+  <!-- Bottom popup -->
+  <div class="popup" id="popup" role="dialog" aria-modal="true">
+    <div class="popup-card">
+      <div class="popup-info">
+        <div class="popup-word" id="popup-word"></div>
+        <div class="popup-translation" id="popup-translation"></div>
+      </div>
+      <button class="replay-btn" id="replay-btn" aria-label="Ouvir" disabled>
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05
+                   c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71
+                   s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <script>
+    const META = {"date": "2026-11-28", "date_formatted": "November 28, 2026", "topic_en": "Ferdinand Magellan names the Pacific Ocean in 1520", "topic_pt": "Fernão de Magalhães dá o nome ao Oceano Pacífico em 1520", "title_pt": "O Capitão Magalhães e o Oceano Pacífico", "story_en": "Long ago, a brave captain named Magellan went on a big sailing trip. He had a giant wooden ship with big white sails. Magellan and his crew wanted to explore new places all across the world. For many days, the ship bounced on big, stormy waves. Splash! Whoosh! The wind blew hard, and the blue water was very bumpy. The friendly sailors held on tight. Then, one sunny morning, the ship sailed into a new ocean. Suddenly, the big waves stopped! The water became very quiet. It looked like a soft, smooth mirror under the bright sun. Cute dolphins swam next to the ship, jumping up and down. Captain Magellan smiled a happy smile. \"Look how calm and peaceful this water is!\" he said. Because the water was so gentle, Magellan gave this ocean a special name. He named it the Pacific Ocean. The word \"Pacific\" means peaceful. Magellan and his friends felt safe and happy. They sailed softly across the gentle water, looking at bright stars at night."};
+
+    // ---- State ----
+    let activeEl     = null;
+    let currentAudio = null;
+    let showingEN    = false;
+
+    // Cache the Portuguese HTML so we can restore it after toggling to EN
+    const PT_HTML = document.getElementById('story-body').innerHTML;
+
+    // ---- DOM refs ----
+    const popup      = document.getElementById('popup');
+    const overlay    = document.getElementById('overlay');
+    const popupWord  = document.getElementById('popup-word');
+    const popupTrans = document.getElementById('popup-translation');
+    const replayBtn  = document.getElementById('replay-btn');
+    const storyBody  = document.getElementById('story-body');
+    const headerTitle = document.getElementById('header-title');
+    const toggleBtn  = document.getElementById('toggle-lang');
+
+    // ---- Audio ----
+    function stopAudio() {
+      if (currentAudio) {
+        currentAudio.pause();
+        currentAudio.src = '';
+        currentAudio = null;
+        replayBtn.classList.remove('playing');
+      }
+    }
+
+    function playAudio(src) {
+      stopAudio();
+      const audio = new Audio(src);
+      currentAudio = audio;
+      replayBtn.classList.add('playing');
+      audio.play().catch(() => {});
+      audio.onended = () => { replayBtn.classList.remove('playing'); currentAudio = null; };
+      audio.onerror = () => { replayBtn.classList.remove('playing'); currentAudio = null; };
+    }
+
+    // ---- Popup ----
+    function showPopup(el) {
+      if (activeEl === el) { hidePopup(); return; }
+      if (activeEl) activeEl.classList.remove('active');
+      stopAudio();
+
+      activeEl = el;
+      el.classList.add('active');
+
+      popupWord.textContent  = el.textContent;
+      popupTrans.textContent = el.dataset.translation || '—';
+
+      const audioSrc = el.dataset.audio || '';
+      replayBtn.disabled = !audioSrc;
+      replayBtn.dataset.src = audioSrc;
+
+      popup.classList.add('visible');
+      overlay.classList.add('visible');
+      // No auto-play — user taps the speaker button to hear audio
+    }
+
+    function hidePopup() {
+      popup.classList.remove('visible');
+      overlay.classList.remove('visible');
+      if (activeEl) { activeEl.classList.remove('active'); activeEl = null; }
+      stopAudio();
+    }
+
+    // ---- EN/PT toggle ----
+    function toggleLanguage() {
+      hidePopup();
+      showingEN = !showingEN;
+      if (showingEN) {
+        storyBody.textContent = META.story_en;
+        toggleBtn.textContent = 'PT';
+        toggleBtn.classList.add('en-active');
+      } else {
+        storyBody.innerHTML = PT_HTML;
+        toggleBtn.textContent = 'EN';
+        toggleBtn.classList.remove('en-active');
+      }
+    }
+
+    // ---- Event listeners ----
+    function onWordTap(e) {
+      const el = e.target.closest('.word.clickable');
+      el ? showPopup(el) : hidePopup();
+    }
+
+    storyBody.addEventListener('click', onWordTap);
+    headerTitle.addEventListener('click', onWordTap);
+
+    overlay.addEventListener('click', hidePopup);
+
+    replayBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      const src = replayBtn.dataset.src;
+      if (src) playAudio(src);
+    });
+
+    toggleBtn.addEventListener('click', toggleLanguage);
+
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') hidePopup(); });
+  </script>
+</body>
+</html>
